@@ -10,6 +10,7 @@ import { getThisWeekRange } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { ProblemCategories, ValueCategories } from "@/consts";
 import { useAppStore } from "@/lib/store"; // useAppStoreをインポート
+import { Idea } from "@/lib/types"; // Import Idea type
 
 export default function HomePage() {
   const { settings } = useAppStore();
@@ -19,7 +20,7 @@ export default function HomePage() {
   const homeData = useLiveQuery(() => {
     if (!settings) {
       console.log('HomePage: useLiveQuery waiting for settings...');
-      return [0, []];
+      return [0, [] as Idea[]] as [number, Idea[]];
     }
 
     const range = getThisWeekRange(new Date(), settings.weekStartsOn);

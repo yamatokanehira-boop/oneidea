@@ -116,11 +116,11 @@ export default function WeeklyReviewPage() {
           <CardContent className="space-y-4 text-sm">
             <div>
               <h3 className="font-semibold">多かった課題</h3>
-              <p>{ProblemCategories[trend.topProblem[0]]}: {trend.topProblem[1]}件</p>
+              <p>{ProblemCategories[trend.topProblem[0] as keyof typeof ProblemCategories]}: {trend.topProblem[1]}件</p>
             </div>
             <div>
               <h3 className="font-semibold">多かった価値</h3>
-              <p>{ValueCategories[trend.topValue[0]]}: {trend.topValue[1]}件</p>
+              <p>{ValueCategories[trend.topValue[0] as keyof typeof ValueCategories]}: {trend.topValue[1]}件</p>
             </div>
              <div>
               <h3 className="font-semibold">最頻ペア</h3>

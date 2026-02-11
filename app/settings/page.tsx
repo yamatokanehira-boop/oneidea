@@ -114,7 +114,11 @@ export default function SettingsPage() {
 
       } catch (error) {
         console.error("Failed to import data:", error);
-        alert(`インポートに失敗しました: ${error.message}`);
+        if (error instanceof Error) {
+          alert(`インポートに失敗しました: ${error.message}`);
+        } else {
+          alert("インポートに失敗しました: 不明なエラーが発生しました。");
+        }
       }
     };
     reader.readAsText(file);
