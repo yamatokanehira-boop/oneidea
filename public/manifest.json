@@ -1,0 +1,28 @@
+{
+  "name": "ONEIDEA",
+  "short_name": "ONEIDEA",
+  "description": "One day, one idea. 日々の気づきを資産に変える思考ツール。",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+    "theme_color": "#ffffff",
+    "icons": [
+      {
+        "src": "/icons/icon-192x192.png",
+        "sizes": "192x192",
+        "type": "image/png"
+      },
+      {
+        "src": "/icons/icon-512x512.png",
+        "sizes": "512x512",
+        "type": "image/png"
+      },
+      {
+        "src": "/icons/apple-touch-icon.png",
+        "sizes": "180x180",
+        "type": "image/png",
+        "purpose": "apple touch icon"
+      }
+    ]
+  }
