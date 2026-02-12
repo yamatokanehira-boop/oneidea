@@ -10,8 +10,8 @@ const pwaConfig = withPWA({
   workboxOptions: {
     disableDevLogs: true,
   },
-  appleWebApp: {
-    capable: false,
+  appleWebApp: { // PWAとしてiOSホーム画面に追加可能にする
+    capable: true,
   },
 });
 
