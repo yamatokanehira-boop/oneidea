@@ -4,26 +4,48 @@ import type {
   ApplyContextType 
 } from '@/consts';
 
+export type SourceType = "self" | "book" | "youtube" | "person" | "other";
+
+export type SourceDetail = {
+  title?: string;
+  author?: string;
+  url?: string;
+  person?: string;
+  note?: string;
+};
+
+export type Cultivation = {
+  memo?: string;
+  nextAction?: string;
+  hypothesis?: string;
+  useCase?: string;
+  applyScene1Type?: ApplyContextType[] | null;
+  applyScene1Note?: string | null;
+  applyScene2Type?: ApplyContextType[] | null;
+  applyScene2Note?: string | null;
+  applyScene3Type?: ApplyContextType[] | null;
+  applyScene3Note?: string | null;
+};
+
 export interface Idea {
   id: string;
   text: string;
   createdAt: string; // ISO string
   problemCategory: ProblemCategory;
   valueCategory: ValueCategory;
-  photoUri?: string;
+  
+  isFavorite: boolean;
+  isCultivated: boolean;
+  sourceType: SourceType;
+  sourceDetail: SourceDetail | null;
+  cultivation?: Cultivation;
+
+  photo?: string;
   locationText?: string;
   deepProblemDetail?: string;
   deepSolution?: string;
   deepValueDetail?: string;
-  applyContextType?: ApplyContextType;
-  applyContextNote?: string;
-  detailText?: string; // 新規追加: アイディアの詳細テキスト
-}
-
-export interface WeeklyBest {
-  weekId: string; // YYYY-MM-DD format (Monday of the week)
-  bestIdeaId: string;
-  createdAt: string; // ISO string
+  detailText?: string;
 }
 
 export type IdeaStatus = 'FLASH' | 'FOSTERED' | 'BEST';

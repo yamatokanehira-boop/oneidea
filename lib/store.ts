@@ -16,6 +16,8 @@ interface AppState {
   settings: AppSettings | null;
   loadSettings: () => Promise<void>;
   updateSettings: (newSettings: Partial<AppSettings>) => Promise<void>;
+  tempCapturedImage: string | null; // Add this
+  setTempCapturedImage: (imageData: string | null) => void; // Add this
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -31,6 +33,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
   hideToast: () => set({ toast: null }),
   settings: null,
+  tempCapturedImage: null, // Add this
+  setTempCapturedImage: (imageData) => set({ tempCapturedImage: imageData }), // Add this
   loadSettings: async () => {
     // DBがオープンするのを待つ
     await db.open(); // ★ここを追加/修正★

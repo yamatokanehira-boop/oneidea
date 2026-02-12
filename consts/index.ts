@@ -15,6 +15,14 @@ export const ValueCategories = {
   SOCIAL_ENVIRONMENTAL: "社会/環境価値",
 } as const;
 
+export const SourceTypes = {
+  self: "自分",
+  book: "本",
+  youtube: "YouTube",
+  person: "人",
+  other: "その他",
+} as const;
+
 export const ApplyContextTypes = {
   WORK: "仕事",
   LIFE: "生活",
@@ -23,4 +31,5 @@ export const ApplyContextTypes = {
 
 export type ProblemCategory = keyof typeof ProblemCategories;
 export type ValueCategory = keyof typeof ValueCategories;
+export type SourceType = keyof typeof SourceTypes;
 export type ApplyContextType = keyof typeof ApplyContextTypes;

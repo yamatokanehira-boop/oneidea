@@ -2,56 +2,62 @@
 
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "@/lib/db";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ProblemCategories, ValueCategories } from "@/consts";
-import Link from "next/link";
+import { SourceTypes } from "@/consts";
 import { Input } from "@/components/ui/input";
 import { useState, useMemo } from "react";
-import { getIdeaStatus } from "@/lib/utils";
-import { type IdeaStatus } from "@/lib/types";
+import { type Idea, type SourceType } from "@/lib/types";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { IdeaCard } from "@/components/features/idea-card";
 
-const statusFilters: { label: string; value: IdeaStatus | 'ALL' }[] = [
-  { label: "すべて", value: 'ALL' },
-  { label: "ひらめき", value: 'FLASH' },
-  { label: "育成済み", value: 'FOSTERED' },
-  { label: "ベスト", value: 'BEST' },
-];
-
-const getStatusBadgeVariant = (status: IdeaStatus) => {
-  switch (status) {
-    case 'BEST': return 'default';
-    case 'FOSTERED': return 'secondary';
-    default: return 'outline';
-  }
+const getSearchableString = (idea: Idea): string => {
+  const parts = [
+    idea.text,
+    idea.detailText,
+    idea.sourceDetail?.title,
+    idea.sourceDetail?.author,
+    idea.sourceDetail?.person,
+    idea.sourceDetail?.note,
+    idea.sourceDetail?.url,
+  ];
+  return parts.filter(Boolean).join(" ").toLowerCase();
 };
 
 export default function DrawerPage() {
   const [keyword, setKeyword] = useState("");
-  const [statusFilter, setStatusFilter] = useState<IdeaStatus | 'ALL'>('ALL');
+  const [activeTab, setActiveTab] = useState<'all' | 'media' | 'cultivated' | 'favorite'>('all');
+  const [mediaSourceFilter, setMediaSourceFilter] = useState<SourceType | 'all'>('all');
 
-  const allData = useLiveQuery(() => Promise.all([
-    db.ideas.orderBy("createdAt").reverse().toArray(),
-    db.weeklyBests.toArray()
-  ]), []);
+  const ideas = useLiveQuery(() => db.ideas.orderBy("createdAt").reverse().toArray(), []);
 
   const filteredIdeas = useMemo(() => {
-    if (!allData) return [];
-    const [allIdeas, allBests] = allData;
+    if (!ideas) return [];
 
-    let ideas = allIdeas;
+    let tempIdeas = ideas;
 
+    // Filter by keyword
     if (keyword) {
-      ideas = ideas.filter(idea => idea.text.toLowerCase().includes(keyword.toLowerCase()));
+      const lowercasedKeyword = keyword.toLowerCase();
+      tempIdeas = tempIdeas.filter(idea => getSearchableString(idea).includes(lowercasedKeyword));
     }
 
-    if (statusFilter !== 'ALL') {
-      ideas = ideas.filter(idea => getIdeaStatus(idea, allBests) === statusFilter);
+    // Filter by tab
+    switch (activeTab) {
+      case 'favorite':
+        tempIdeas = tempIdeas.filter(idea => idea.isFavorite);
+        break;
+      case 'cultivated':
+        tempIdeas = tempIdeas.filter(idea => idea.isCultivated);
+        break;
+      case 'media':
+        if (mediaSourceFilter !== 'all') {
+          tempIdeas = tempIdeas.filter(idea => idea.sourceType === mediaSourceFilter);
+        }
+        break;
     }
     
-    return ideas;
-  }, [allData, keyword, statusFilter]);
+    return tempIdeas;
+  }, [ideas, keyword, activeTab, mediaSourceFilter]);
 
   return (
     <div className="space-y-6 pb-12">
@@ -63,35 +69,43 @@ export default function DrawerPage() {
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
         />
-        <Tabs value={statusFilter} onValueChange={(value) => setStatusFilter(value as IdeaStatus | 'ALL')}>
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
           <TabsList className="grid w-full grid-cols-4">
-             {statusFilters.map(filter => (
-                <TabsTrigger key={filter.value} value={filter.value}>{filter.label}</TabsTrigger>
-             ))}
+             <TabsTrigger value="all">すべて</TabsTrigger>
+             <TabsTrigger value="media">媒体</TabsTrigger>
+             <TabsTrigger value="cultivated">育成済み</TabsTrigger>
+             <TabsTrigger value="favorite">お気に入り</TabsTrigger>
           </TabsList>
         </Tabs>
+
+        {activeTab === 'media' && (
+          <div className="flex flex-wrap gap-2 pt-2">
+            <Badge
+              variant={mediaSourceFilter === 'all' ? 'default' : 'outline'}
+              onClick={() => setMediaSourceFilter('all')}
+              className="cursor-pointer"
+            >
+              すべて
+            </Badge>
+            {Object.entries(SourceTypes).map(([key, label]) => (
+              <Badge
+                key={key}
+                variant={mediaSourceFilter === key ? 'default' : 'outline'}
+                onClick={() => setMediaSourceFilter(key as SourceType)}
+                className="cursor-pointer"
+              >
+                {label}
+              </Badge>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="space-y-4">
-        {filteredIdeas.map((idea) => {
-            const status = getIdeaStatus(idea, allData ? allData[1] : []);
-            return (
-              <Link href={`/idea/${idea.id}`} key={idea.id} className="block">
-                <Card className="hover:bg-muted/50">
-                  <CardHeader>
-                    <CardTitle className="text-lg line-clamp-2">{idea.text}</CardTitle>
-                    <CardDescription>{new Date(idea.createdAt).toLocaleDateString()}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex flex-wrap gap-2">
-                    <Badge variant={getStatusBadgeVariant(status)} className="capitalize">{status.toLowerCase()}</Badge>
-                    <Badge variant="outline">{ProblemCategories[idea.problemCategory]}</Badge>
-                    <Badge variant="outline">{ValueCategories[idea.valueCategory]}</Badge>
-                  </CardContent>
-                </Card>
-              </Link>
-            )
-        })}
-        {filteredIdeas.length === 0 && (
+        {filteredIdeas && filteredIdeas.map((idea) => (
+            <IdeaCard idea={idea} key={idea.id} />
+        ))}
+        {filteredIdeas && filteredIdeas.length === 0 && (
           <p className="py-8 text-center text-sm text-muted-foreground">
             条件に合うアイデアはありません。
           </p>

@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, List, Plus, Star, Settings } from "lucide-react";
+import { Home, List, Plus, Rocket, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/home", icon: Home, label: "ホーム" },
   { href: "/drawer", icon: List, label: "引き出し" },
   { href: "/new", icon: Plus, label: "追加" },
-  { href: "/review", icon: Star, label: "レビュー" },
+  { href: "/review", icon: Rocket, label: "育成" },
   { href: "/settings", icon: Settings, label: "設定" },
 ];
 

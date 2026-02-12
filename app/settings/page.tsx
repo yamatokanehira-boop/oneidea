@@ -3,16 +3,17 @@
 import { Button } from "@/components/ui/button";
 import { db } from "@/lib/db";
 import { useAppStore } from "@/lib/store";
-import { useRef, useState } from "react";
+import { useState } from "react"; // useRef は不要になる
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { AppTheme, FontSize, WeekStartsOn, AfterNewIdeaBehavior } from "@/lib/types";
 import { ProblemCategories, ValueCategories, ApplyContextTypes } from "@/consts";
-import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 import { enUS, ja } from 'date-fns/locale'; // 日本語ロケールをインポート
 import { Idea } from "@/lib/types";
-import { getIdeaStatus } from "@/lib/utils";
+import { useRouter } from "next/navigation"; // useRouter をインポート
+import { AlertCircle } from "lucide-react"; // AlertCircle をインポート
 
 // PDF Exportの期間フィルタオプション
 const pdfExportPeriodOptions = [
@@ -26,15 +27,15 @@ const pdfExportPeriodOptions = [
 const problemConditionOptions = Object.entries(ProblemCategories).map(([key, label]) => ({ label, value: key }));
 const valueConditionOptions = Object.entries(ValueCategories).map(([key, label]) => ({ label, value: key }));
 const statusConditionOptions = [
-  { label: "ひらめき", value: "FLASH" },
+  { label: "気づき", value: "FLASH" },
   { label: "育成済み", value: "FOSTERED" },
-  { label: "ベスト", value: "BEST" },
 ];
 const applyConditionOptions = Object.entries(ApplyContextTypes).map(([key, label]) => ({ label, value: key }));
 
 export default function SettingsPage() {
   const { settings, updateSettings, showToast } = useAppStore();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // const fileInputRef = useRef<HTMLInputElement>(null); // 削除
+  const router = useRouter(); // useRouter を取得
 
   // PDF Export 関連のState
   const [pdfPeriod, setPdfPeriod] = useState<string>("all_time");
@@ -45,89 +46,32 @@ export default function SettingsPage() {
 
   if (!settings) return null; // 設定がロードされるまで何も表示しない
 
-  const handleExport = async () => {
-    try {
-      const allIdeas = await db.ideas.toArray();
-      const allWeeklyBests = await db.weeklyBests.toArray();
-      const data = {
-        ideas: allIdeas,
-        weeklyBests: allWeeklyBests,
-        settings: settings, // 設定もエクスポート対象に含める
-      };
+  // handleExport, handleImportClick, handleFileChange 関数は削除
 
-      const jsonString = JSON.stringify(data, null, 2);
-      const blob = new Blob([jsonString], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `oneidea_backup_${new Date().toISOString().split('T')[0]}.json`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      showToast("全データをエクスポートしました");
-    } catch (error) {
-      console.error("Failed to export data:", error);
-      alert("エクスポートに失敗しました。");
+  const handleResetAll = async () => {
+    if (!window.confirm("本当にすべての気づきを削除しますか？元に戻せません。")) {
+      return;
     }
-  };
-
-  const handleImportClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    if (!window.confirm("現在のデータをすべて削除し、インポートしたデータで上書きします。よろしいですか？")) {
+    const confirmationText = window.prompt("最終確認のため「RESET」と入力してください。");
+    if (confirmationText !== "RESET") {
+      showToast("リセットをキャンセルしました。");
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      try {
-        const result = e.target?.result;
-        if (typeof result !== 'string') throw new Error("File could not be read.");
-        
-        const data = JSON.parse(result);
-
-        if (!data.ideas || !data.weeklyBests || !data.settings) { // settingsもチェック
-          throw new Error("Invalid data format.");
-        }
-
-        await db.transaction('rw', db.ideas, db.weeklyBests, db.settings, async () => { // settingsもトランザクションに含める
-          await db.ideas.clear();
-          await db.weeklyBests.clear();
-          await db.settings.clear(); // 設定もクリアしてインポート
-
-          await db.ideas.bulkAdd(data.ideas);
-          await db.weeklyBests.bulkAdd(data.weeklyBests);
-          await db.settings.add(data.settings); // 設定をインポート
-        });
-
-        showToast("データのインポートが完了しました");
-        // Reset file input
-        if(fileInputRef.current) fileInputRef.current.value = "";
-        // 設定が更新されたので、アプリに反映させるためにリロードを促すか、stateを更新
-        updateSettings(data.settings); // Zustandストアの設定も更新
-
-      } catch (error) {
-        console.error("Failed to import data:", error);
-        if (error instanceof Error) {
-          alert(`インポートに失敗しました: ${error.message}`);
-        } else {
-          alert("インポートに失敗しました: 不明なエラーが発生しました。");
-        }
-      }
-    };
-    reader.readAsText(file);
+    try {
+      await db.resetAll();
+      showToast("リセットしました");
+      router.push("/home"); // Homeへ遷移
+    } catch (error) {
+      console.error("Failed to reset all data:", error);
+      showToast("リセットに失敗しました。");
+    }
   };
+
 
   const generatePdfContent = async () => {
     let targetIdeas: Idea[] = [];
     const allIdeas = await db.ideas.orderBy("createdAt").reverse().toArray();
-    const allWeeklyBests = await db.weeklyBests.toArray();
     const now = new Date();
 
     // 期間フィルタリング
@@ -155,11 +99,21 @@ export default function SettingsPage() {
       targetIdeas = targetIdeas.filter(idea => pdfSelectedValues.includes(idea.valueCategory));
     }
     if (pdfSelectedStatuses.length > 0) {
-      targetIdeas = targetIdeas.filter(idea => pdfSelectedStatuses.includes(getIdeaStatus(idea, allWeeklyBests)));
+      targetIdeas = targetIdeas.filter(idea => {
+        if (pdfSelectedStatuses.includes("FLASH") && !idea.isCultivated) return true;
+        if (pdfSelectedStatuses.includes("FOSTERED") && idea.isCultivated) return true;
+        return false;
+      });
     }
+    // applyContextType は単一の ApplyContextType | null であり、配列ではないため、ここを修正する必要がある
+    // しかし、この機能はPDF出力なので、現在のデータ構造に合わせておくのが安全。
+    // 育成フォームで applySceneXType が配列になったので、PDF出力のフィルタリングもそれに合わせる必要がある。
+    // ただし、現在の pdfSelectedApplies は単一選択を想定しているので、設計見直しが必要。
+    // 今回のタスク範囲外なので、既存のコードに合わせておく。
     if (pdfSelectedApplies.length > 0) {
-      targetIdeas = targetIdeas.filter(idea => idea.applyContextType && pdfSelectedApplies.includes(idea.applyContextType));
+      targetIdeas = targetIdeas.filter(idea => idea.cultivation?.applyScene1Type && idea.cultivation.applyScene1Type.some(type => pdfSelectedApplies.includes(type)));
     }
+
 
     if (targetIdeas.length === 0) {
       alert("選択された条件に合うアイデアがありません。");
@@ -183,10 +137,7 @@ export default function SettingsPage() {
               .idea-text { font-size: 16px; font-weight: bold; margin-bottom: 10px; }
               .idea-badges { margin-bottom: 10px; }
               .badge { display: inline-block; padding: 4px 8px; border-radius: 12px; background: #f0f0f0; color: #555; font-size: 11px; margin-right: 5px; margin-bottom: 5px; }
-              .deep-dive { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #eee; }
-              .deep-dive p { margin: 5px 0; font-size: 14px; }
-              .deep-dive-label { font-weight: bold; color: #555; }
-              .best-badge { background: #007aff; color: white; } /* Apple Blue */
+              .favorite-badge { background: #007aff; color: white; }
           </style>
       </head>
       <body>
@@ -194,24 +145,25 @@ export default function SettingsPage() {
     `;
 
     targetIdeas.forEach(idea => {
-      const isBest = allWeeklyBests.some(best => best.bestIdeaId === idea.id);
+      const isFavorite = idea.isFavorite; // isFavoriteを使用
       htmlContent += `
         <div class="idea-card">
             <div class="idea-header">
                 <div class="idea-date">${format(new Date(idea.createdAt), 'yyyy/MM/dd (eee)', { locale: ja })}</div>
-                ${isBest ? '<div class="badge best-badge">Best</div>' : ''}
+                ${isFavorite ? '<div class="badge favorite-badge">お気に入り</div>' : ''}
             </div>
             <div class="idea-text">${idea.text}</div>
             <div class="idea-badges">
                 <span class="badge">${ProblemCategories[idea.problemCategory]}</span>
                 <span class="badge">${ValueCategories[idea.valueCategory]}</span>
             </div>
-            ${(idea.deepProblemDetail || idea.deepSolution || idea.deepValueDetail || idea.applyContextNote) ? `
+            ${(idea.deepProblemDetail || idea.deepSolution || idea.deepValueDetail || idea.cultivation?.applyScene1Note) ? `
               <div class="deep-dive">
                   ${idea.deepProblemDetail ? `<p><span class="deep-dive-label">課題の具体:</span> ${idea.deepProblemDetail}</p>` : ''}
                   ${idea.deepSolution ? `<p><span class="deep-dive-label">解決アイディア:</span> ${idea.deepSolution}</p>` : ''}
                   ${idea.deepValueDetail ? `<p><span class="deep-dive-label">価値の具体:</span> ${idea.deepValueDetail}</p>` : ''}
-                  ${idea.applyContextType || idea.applyContextNote ? `<p><span class="deep-dive-label">応用先:</span> ${idea.applyContextType ? ApplyContextTypes[idea.applyContextType] : ''} ${idea.applyContextNote ? `(${idea.applyContextNote})` : ''}</p>` : ''}
+                  ${idea.cultivation?.applyScene1Type?.length ? `<p><span class="deep-dive-label">応用先:</span> ${idea.cultivation.applyScene1Type.map(type => ApplyContextTypes[type]).join(', ')}</p>` : ''}
+                  ${idea.cultivation?.applyScene1Note ? `<p><span class="deep-dive-label">応用先メモ:</span> ${idea.cultivation.applyScene1Note}</p>` : ''}
               </div>
             ` : ''}
         </div>
@@ -295,28 +247,7 @@ export default function SettingsPage() {
       <Card>
         <CardHeader><CardTitle>データ管理</CardTitle></CardHeader>
         <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <h3 className="text-base font-semibold">JSONデータ</h3>
-            <p className="text-sm text-muted-foreground">
-              全データをJSONファイルとしてエクスポート・インポートできます。インポートすると既存のデータは上書きされます。
-            </p>
-            <div className="flex gap-4 pt-2">
-              <Button variant="outline" onClick={handleExport}>
-                エクスポート
-              </Button>
-              <Button variant="outline" onClick={handleImportClick}>
-                インポート
-              </Button>
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                accept=".json"
-                className="hidden"
-              />
-            </div>
-          </div>
-
+          {/* PDFで書き出し */}
           <div className="space-y-2">
             <h3 className="text-base font-semibold">PDFで書き出し</h3>
             <p className="text-sm text-muted-foreground">
@@ -399,6 +330,25 @@ export default function SettingsPage() {
               </div>
 
               <Button onClick={generatePdfContent} className="w-full">PDF出力</Button>
+            </div>
+          </div>
+
+          <div className="space-y-2 pt-6"> {/* リセットボタンセクション */}
+            <h3 className="text-base font-semibold text-black dark:text-white">
+              <AlertCircle className="inline-block h-4 w-4 mr-1 mb-0.5 text-black dark:text-white" />
+              全データのリセット
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              <span className="font-bold">すべての気づきと設定を削除します。</span> この操作は元に戻せません。
+            </p>
+            <div className="flex flex-col gap-2">
+              <p className="text-xs text-muted-foreground p-2 rounded-md">
+                <AlertCircle className="inline-block h-3 w-3 mr-1 text-black dark:text-white" />
+                リセット前に<span className="font-bold">大切なデータのエクスポートを強く推奨します。</span>
+              </p>
+              <Button onClick={handleResetAll} className="w-full bg-black text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200">
+                リセット
+              </Button>
             </div>
           </div>
         </CardContent>

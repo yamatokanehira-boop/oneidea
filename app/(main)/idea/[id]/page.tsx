@@ -9,9 +9,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ProblemCategories, ValueCategories, ApplyContextTypes } from "@/consts";
-import type { ApplyContextType } from "@/consts";
 import { useAppStore } from "@/lib/store";
-import { isFostered as checkIsFostered } from "@/lib/utils";
+import { hasAnyCultivationInput } from "@/lib/utils";
+import { CultivationField } from "@/components/ui/cultivation-field";
+import { ApplySceneSection } from "@/components/features/apply-scene-section";
+import { Cultivation } from "@/lib/types"; // Import Cultivation type
 
 export default function IdeaDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -21,22 +23,22 @@ export default function IdeaDetailPage({ params }: { params: { id: string } }) {
   const [deepProblem, setDeepProblem] = useState("");
   const [deepSolution, setDeepSolution] = useState("");
   const [deepValue, setDeepValue] = useState("");
-  const [applyContext, setApplyContext] = useState<ApplyContextType | undefined>();
-  const [applyNote, setApplyNote] = useState("");
-  const [detailText, setDetailText] = useState(""); // 新規追加
+  const [detailText, setDetailText] = useState("");
+  const [cultivationState, setCultivationState] = useState<Cultivation>({}); // New state variable
+
   
-  const isFostered = idea ? checkIsFostered(idea) : false;
+  const hasInputForDisplay = idea ? hasAnyCultivationInput(idea) : false;
 
   useEffect(() => {
     if (idea) {
       setDeepProblem(idea.deepProblemDetail || "");
       setDeepSolution(idea.deepSolution || "");
       setDeepValue(idea.deepValueDetail || "");
-      setApplyContext(idea.applyContextType);
-      setApplyNote(idea.applyContextNote || "");
-      setDetailText(idea.detailText || ""); // 新規追加
+      setDetailText(idea.detailText || "");
+      setCultivationState(idea.cultivation || {}); // Initialize cultivationState
     }
   }, [idea]);
+
 
   const handleSave = async () => {
     if (!idea) return;
@@ -45,17 +47,36 @@ export default function IdeaDetailPage({ params }: { params: { id: string } }) {
         deepProblemDetail: deepProblem,
         deepSolution: deepSolution,
         deepValueDetail: deepValue,
-        applyContextType: applyContext,
-        applyContextNote: applyNote,
-        detailText: detailText, // 新規追加
+        detailText: detailText,
+        cultivation: cultivationState,
       });
-      showToast("深掘り内容を保存しました");
+      showToast("育成内容を保存しました");
     } catch (error) {
-      console.error("Failed to save deep dive:", error);
+      console.error("Failed to save cultivation:", error);
       alert("保存に失敗しました。");
     }
   };
-  
+
+  const handleApplySceneTypesChange = ( // 関数名変更
+    scene: 1 | 2 | 3,
+    types: ApplyContextType[] // 配列を受け取る
+  ) => {
+    setCultivationState((prev) => ({
+      ...prev,
+      [`applyScene${scene}Type`]: types.length > 0 ? types : null, // 配列が空ならnullをセット
+    }));
+  };
+
+  const handleApplySceneNoteChange = (
+    scene: 1 | 2 | 3,
+    note: string
+  ) => {
+    setCultivationState((prev) => ({
+      ...prev,
+      [`applyScene${scene}Note`]: note,
+    }));
+  };
+
   if (idea === undefined) return <div>Loading...</div>;
   if (idea === null) return notFound();
 
@@ -67,7 +88,7 @@ export default function IdeaDetailPage({ params }: { params: { id: string } }) {
         <div className="mt-4 flex flex-wrap gap-2">
             <Badge variant="outline">{ProblemCategories[idea.problemCategory]}</Badge>
             <Badge variant="outline">{ValueCategories[idea.valueCategory]}</Badge>
-            {isFostered && <Badge>育成済み</Badge>}
+            {hasInputForDisplay && <Badge>育成済み</Badge>}
         </div>
         <div className="mt-6 space-y-2">
           <label htmlFor="detailText" className="text-sm font-medium text-muted-foreground">詳細</label>
@@ -83,39 +104,56 @@ export default function IdeaDetailPage({ params }: { params: { id: string } }) {
       </section>
 
       <Card>
-        <CardHeader><CardTitle>深掘りする</CardTitle></CardHeader>
+        <CardHeader><CardTitle>育成する</CardTitle></CardHeader>
         <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">1) 課題の具体（誰が/いつ/どこで）</label>
-            <Textarea value={deepProblem} onChange={e => setDeepProblem(e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">2) 解決アイディア（工夫）</label>
-            <Textarea value={deepSolution} onChange={e => setDeepSolution(e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">3) 価値の具体（どう良くなる）</label>
-            <Textarea value={deepValue} onChange={e => setDeepValue(e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">4) 応用先</label>
-            <div className="flex flex-wrap gap-2">
-              {Object.entries(ApplyContextTypes).map(([key, label]) => (
-                <Badge
-                  key={key}
-                  variant={applyContext === key ? "default" : "outline"}
-                  onClick={() => setApplyContext(key as ApplyContextType)}
-                  className="cursor-pointer"
-                >
-                  {label}
-                </Badge>
-              ))}
-            </div>
-            <Textarea value={applyNote} onChange={e => setApplyNote(e.target.value)} placeholder="応用先の詳細"/>
-          </div>
+          <CultivationField label="1) 課題の具体" description="誰が、いつ、どこで、どのような課題を抱えているか" className="space-y-2">
+            <Textarea
+              value={deepProblem}
+              onChange={e => setDeepProblem(e.target.value)}
+              placeholder="例: 学生が学生がカフェで勉強中、集中できない"
+            />
+          </CultivationField>
+          <CultivationField label="2) 解決アイディア（工夫）" description="その課題を解決するための具体的なアプローチや独自の工夫" className="space-y-2">
+            <Textarea
+              value={deepSolution}
+              onChange={e => setDeepSolution(e.target.value)}
+              placeholder="例: 環境音を生成するアプリで、好みの集中空間を再現する"
+            />
+          </CultivationField>
+          <CultivationField label="3) 価値の具体（どう良くなる）" description="解決策がもたらすポジティブな変化や、どうすればもっと良くなるか" className="space-y-2">
+            <Textarea
+              value={deepValue}
+              onChange={e => setDeepValue(e.target.value)}
+              placeholder="例: カフェでも自宅でも、ノイズを気にせず高い集中力を維持できる"
+            />
+          </CultivationField>
+          <ApplySceneSection
+            sceneNumber={1}
+            selectedTypes={cultivationState.applyScene1Type || null}
+            note={cultivationState.applyScene1Note || null}
+            onTypesChange={(types) => handleApplySceneTypesChange(1, types)}
+            onNoteChange={(note) => handleApplySceneNoteChange(1, note)}
+          />
+          <ApplySceneSection
+            sceneNumber={2}
+            selectedTypes={cultivationState.applyScene2Type || null}
+            note={cultivationState.applyScene2Note || null}
+            onTypesChange={(types) => handleApplySceneTypesChange(2, types)}
+            onNoteChange={(note) => handleApplySceneNoteChange(2, note)}
+          />
+          <ApplySceneSection
+            sceneNumber={3}
+            selectedTypes={cultivationState.applyScene3Type || null}
+            note={cultivationState.applyScene3Note || null}
+            onTypesChange={(types) => handleApplySceneTypesChange(3, types)}
+            onNoteChange={(note) => handleApplySceneNoteChange(3, note)}
+          />
           <Button onClick={handleSave} className="w-full">保存する</Button>
         </CardContent>
       </Card>
     </div>
   );
 }
+
+
+  

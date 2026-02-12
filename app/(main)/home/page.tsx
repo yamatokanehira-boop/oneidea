@@ -10,16 +10,20 @@ import { getThisWeekRange } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { ProblemCategories, ValueCategories } from "@/consts";
 import { useAppStore } from "@/lib/store"; // useAppStoreをインポート
+import { hasAnyCultivationInput } from "@/lib/utils"; // Import the new function
 import { Idea } from "@/lib/types"; // Import Idea type
+
+import { IdeaCard } from "@/components/features/idea-card";
 
 export default function HomePage() {
   const { settings } = useAppStore();
 
-  console.log('HomePage: Rendered, settings:', settings);
+  if (!settings) {
+    return null;
+  }
 
   const homeData = useLiveQuery(() => {
-    if (!settings) {
-      console.log('HomePage: useLiveQuery waiting for settings...');
+    if (!settings) { // This check inside useLiveQuery might be redundant now, but harmless.
       return [0, [] as Idea[]] as [number, Idea[]];
     }
 
@@ -27,21 +31,17 @@ export default function HomePage() {
     const start = range.start.toISOString();
     const end = range.end.toISOString();
 
-    console.log('HomePage: useLiveQuery fetching ideas for range:', start, 'to', end);
     return Promise.all([
       db.ideas.where('createdAt').between(start, end).count(),
-      db.ideas.orderBy("createdAt").reverse().limit(3).toArray(),
+      // Fetch all ideas, then filter them in memory using hasAnyCultivationInput
+      db.ideas.orderBy("createdAt").reverse().toArray(), // Fetch all to filter
     ]);
   }, [settings]);
 
-  const [weeklyCount, recentIdeas] = homeData || [0, []];
-  const isReviewDay = new Date().getDay() === 0;
+  const [weeklyCount, allIdeas] = homeData || [0, []];
+  // Filter allIdeas to get only those with cultivation input and then take the recent 3
+  const recentIdeas = allIdeas.filter(idea => hasAnyCultivationInput(idea)).slice(0, 3);
 
-  if (!settings) {
-    console.log('HomePage: Returning null because settings is null');
-    return null;
-  }
-  console.log('HomePage: Rendering content. weeklyCount:', weeklyCount, 'recentIdeas:', recentIdeas);
 
   return (
     <div className="space-y-8">
@@ -51,44 +51,17 @@ export default function HomePage() {
         <Link href="/new" passHref>
           <Button size="lg" className="mt-6 w-full rounded-full">
             <Plus className="mr-2 h-5 w-5" />
-            今日のひらめきを記録する
+            気づきを記録する
           </Button>
         </Link>
       </section>
-
-      {isReviewDay && (
-        <Card className="bg-secondary">
-          <CardHeader>
-            <CardTitle>週次レビューの時間です</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-4 text-sm text-muted-foreground">
-              今週のアイデアを振り返り、ベストワンを選びましょう。
-            </p>
-            <Link href="/review" passHref>
-              <Button className="w-full">レビューを始める</Button>
-            </Link>
-          </CardContent>
-        </Card>
-      )}
 
       <section>
         <h2 className="text-xl font-semibold">最近のアイデア</h2>
         <div className="mt-4 space-y-4">
           {recentIdeas && recentIdeas.length > 0 ? (
             recentIdeas.map(idea => (
-              <Link href={`/idea/${idea.id}`} key={idea.id} className="block">
-                <Card className="hover:bg-muted/50">
-                   <CardHeader>
-                    <CardTitle className="text-base line-clamp-2">{idea.text}</CardTitle>
-                    <CardDescription>{new Date(idea.createdAt).toLocaleDateString()}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex flex-wrap gap-2">
-                     <Badge variant="outline" className="text-xs">{ProblemCategories[idea.problemCategory]}</Badge>
-                     <Badge variant="outline" className="text-xs">{ValueCategories[idea.valueCategory]}</Badge>
-                  </CardContent>
-                </Card>
-              </Link>
+              <IdeaCard idea={idea} key={idea.id} />
             ))
           ) : (
              <p className="py-8 text-center text-sm text-muted-foreground">
