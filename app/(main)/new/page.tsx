@@ -13,7 +13,7 @@ import type { SourceDetail } from "@/lib/types";
 import { useAppStore } from "@/lib/store"; // useAppStoreをインポート
 import { CameraIcon, Trash2 } from "lucide-react"; // Import CameraIcon, Trash2
 import { compressImage } from "@/lib/utils"; // Import compressImage
-import { format } from "date-fns"; // Import format
+
 
 export default function NewIdeaPage() {
   const router = useRouter();
@@ -141,16 +141,7 @@ export default function NewIdeaPage() {
           required
         />
         
-        <div className="space-y-2 mt-4">
-          <label htmlFor="selectedDate" className="text-sm font-medium">日付</label>
-          <Input
-            id="selectedDate"
-            type="date"
-            value={format(selectedDate, 'yyyy-MM-dd')}
-            onChange={(e) => setSelectedDate(new Date(e.target.value))}
-            className="text-base"
-          />
-        </div>
+
 
         <div className="space-y-2 mt-4">
           <label htmlFor="detailText" className="text-sm font-medium">詳細 (任意)</label>
