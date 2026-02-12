@@ -110,8 +110,7 @@ export default function ClientLayout({
   return (
     <ThemeProvider
       attribute="class"
-      defaultTheme="system" // defaultTheme は初回ロード時のみ使用されるため、'system' に固定するか、削除する。
-                            // settings?.theme が dynamic に変わることを期待するなら、defaultTheme は固定が良い
+
       enableSystem
       disableTransitionOnChange
     >
