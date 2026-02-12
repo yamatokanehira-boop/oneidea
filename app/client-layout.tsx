@@ -111,7 +111,8 @@ export default function ClientLayout({
     <ThemeProvider
       attribute="class"
 
-      enableSystem
+      defaultTheme="system" // defaultTheme を戻す
+      enableSystem={false} // false に変更
       disableTransitionOnChange
     >
       <div className="flex h-screen flex-col">
