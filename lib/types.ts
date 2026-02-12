@@ -25,6 +25,7 @@ export type Cultivation = {
   applyScene2Note?: string | null;
   applyScene3Type?: ApplyContextType[] | null;
   applyScene3Note?: string | null;
+  [key: string]: any; // Add index signature
 };
 
 export interface Idea {

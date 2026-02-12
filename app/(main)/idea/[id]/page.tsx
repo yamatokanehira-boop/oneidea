@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ProblemCategories, ValueCategories, ApplyContextTypes } from "@/consts";
+import { ProblemCategories, ValueCategories, ApplyContextTypes, ApplyContextType } from "@/consts";
 import { useAppStore } from "@/lib/store";
 import { hasAnyCultivationInput } from "@/lib/utils";
 import { CultivationField } from "@/components/ui/cultivation-field";

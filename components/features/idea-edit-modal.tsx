@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { type Idea, type ProblemCategory, type ValueCategory, type SourceType, type SourceDetail } from "@/lib/types";
-import { ProblemCategories, ValueCategories, SourceTypes, ApplyContextTypes } from "@/consts"; // ApplyContextTypesも必要になるかも
+import { type Idea, type SourceType, type SourceDetail } from "@/lib/types";
+import { ProblemCategories, ValueCategories, SourceTypes, ApplyContextTypes, type ProblemCategory, type ValueCategory } from "@/consts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";

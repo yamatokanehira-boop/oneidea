@@ -35,8 +35,10 @@ export function hasAnyCultivationInput(idea: Idea): boolean {
 
   // Check new applyScene fields (items 4, 5, 6)
   for (let i = 1; i <= 3; i++) {
-    const applySceneType = idea.cultivation?.[`applyScene${i}Type` as keyof Cultivation];
-    const applySceneNote = idea.cultivation?.[`applyScene${i}Note` as keyof Cultivation];
+    const typeKey = `applyScene${i}Type` as string;
+    const noteKey = `applyScene${i}Note` as string;
+    const applySceneType = idea.cultivation?.[typeKey];
+    const applySceneNote = idea.cultivation?.[noteKey];
     if (applySceneType || (applySceneNote && (applySceneNote as string).trim().length > 0)) {
       return true;
     }
@@ -64,8 +66,10 @@ export function getCultivationProgress(idea: Idea): { filledCount: number; total
 
   // Items 4, 5, 6: applySceneXType OR applySceneXNote
   for (let i = 1; i <= 3; i++) {
-    const applySceneType = idea.cultivation?.[`applyScene${i}Type` as keyof Cultivation];
-    const applySceneNote = idea.cultivation?.[`applyScene${i}Note` as keyof Cultivation];
+    const typeKey = `applyScene${i}Type` as string;
+    const noteKey = `applyScene${i}Note` as string;
+    const applySceneType = idea.cultivation?.[typeKey];
+    const applySceneNote = idea.cultivation?.[noteKey];
     if (applySceneType || (applySceneNote && (applySceneNote as string).trim().length > 0)) {
       filledCount++;
     }

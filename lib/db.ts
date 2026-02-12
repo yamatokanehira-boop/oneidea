@@ -1,5 +1,6 @@
 import Dexie, { type Table } from 'dexie';
-import { type Idea, type AppSettings, type ApplyContextType } from './types'; // ApplyContextType も追加
+import { type Idea, type AppSettings } from './types';
+import { type ApplyContextType } from '@/consts';
 
 export class OneIdeaDB extends Dexie {
   ideas!: Table<Idea, string>;
