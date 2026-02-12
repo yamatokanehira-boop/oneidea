@@ -33,14 +33,14 @@ export default function HomePage() {
 
     return Promise.all([
       db.ideas.where('createdAt').between(start, end).count(),
-      // Fetch all ideas, then filter them in memory using hasAnyCultivationInput
-      db.ideas.orderBy("createdAt").reverse().toArray(), // Fetch all to filter
+      // Fetch recent 7 ideas, then filter them in memory using hasAnyCultivationInput
+      db.ideas.orderBy("createdAt").reverse().limit(7).toArray(), // Fetch recent 7 ideas
     ]);
   }, [settings]);
 
   const [weeklyCount, allIdeas] = homeData || [0, []];
-  // Filter allIdeas to get only those with cultivation input and then take the recent 3
-  const recentIdeas = allIdeas.filter(idea => hasAnyCultivationInput(idea)).slice(0, 3);
+  // Filter allIdeas to get only those with cultivation input and then take the recent 7
+  const recentIdeas = allIdeas.filter(idea => hasAnyCultivationInput(idea)).slice(0, 7);
 
 
   return (

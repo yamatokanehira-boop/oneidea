@@ -122,7 +122,7 @@ export default function ClientLayout({
           rightContent={isHome ? calendarShortcut : undefined}
         />
         <Toaster />
-        <main className="flex-1 overflow-y-auto pt-[calc(env(safe-area-inset-top)+56px+12px)] pb-[calc(env(safe-area-inset-bottom)+70px)]">
+        <main className="flex-1 overflow-y-auto pt-[calc(env(safe-area-inset-top)+56px+24px)] pb-[calc(env(safe-area-inset-bottom)+70px+16px)]">
           <div className="container mx-auto max-w-md px-4">
             {/* コンテンツが準備できていない場合はローディング表示 */}
             {!contentReady ? (
