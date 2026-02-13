@@ -9,9 +9,9 @@ import { useState, useMemo } from "react";
 import { type Idea, type SourceType } from "@/lib/types";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { IdeaCard } from "@/components/features/idea-card";
-import { normalizeTag } from "@/lib/utils";
+// import { normalizeTag } from "@/lib/utils"; // Removed normalizeTag import
 import { getThisWeekRange } from "@/lib/utils";
-import { subDays } from "date-fns"; // Corrected import and usage
+import { subDays } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { FilterIcon, XCircle, PinIcon, PinOffIcon } from "lucide-react";
 
@@ -25,7 +25,7 @@ const getSearchableString = (idea: Idea): string => {
     idea.sourceDetail?.person,
     idea.sourceDetail?.note,
     idea.sourceDetail?.url,
-    ...(idea.tags || []),
+    // ...(idea.tags || []), // Removed tags from searchable string
     idea.cultivation?.memo,
     idea.cultivation?.nextAction,
     idea.cultivation?.hypothesis,
@@ -45,7 +45,7 @@ export default function DrawerPage() {
   const [keyword, setKeyword] = useState("");
   const [activeTab, setActiveTab] = useState<'all' | 'media' | 'cultivated' | 'favorite'>('all');
   const [mediaSourceFilter, setMediaSourceFilter] = useState<SourceType | 'all'>('all');
-  const [filterTag, setFilterTag] = useState("");
+  // const [filterTag, setFilterTag] = useState(""); // Removed filterTag state
   const [filterDateRange, setFilterDateRange] = useState<FilterDateRange>('all');
   const [filterPinned, setFilterPinned] = useState<boolean>(false);
   const [showFilters, setShowFilters] = useState<boolean>(false);
@@ -84,13 +84,13 @@ export default function DrawerPage() {
         break;
     }
 
-    // Filter by tag
-    if (filterTag) {
-      const normalizedFilterTag = normalizeTag(filterTag);
-      if (normalizedFilterTag) {
-        tempIdeas = tempIdeas.filter(idea => idea.tags?.includes(normalizedFilterTag));
-      }
-    }
+    // Removed tag filtering logic
+    // if (filterTag) {
+    //   const normalizedFilterTag = normalizeTag(filterTag);
+    //   if (normalizedFilterTag) {
+    //     tempIdeas = tempIdeas.filter(idea => idea.tags?.includes(normalizedFilterTag));
+    //   }
+    // }
 
     // Filter by date range
     if (filterDateRange !== 'all') {
@@ -119,14 +119,14 @@ export default function DrawerPage() {
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
     
-    return tempIdeas;
-  }, [ideas, searchWords, activeTab, mediaSourceFilter, filterTag, filterDateRange, filterPinned]);
+    // Removed filterTag from dependency array
+  }, [ideas, searchWords, activeTab, mediaSourceFilter, filterDateRange, filterPinned]);
 
   const handleClearFilters = () => {
     setKeyword("");
     setActiveTab('all');
     setMediaSourceFilter('all');
-    setFilterTag("");
+    // setFilterTag(""); // Removed setFilterTag
     setFilterDateRange('all');
     setFilterPinned(false);
   };
@@ -151,7 +151,7 @@ export default function DrawerPage() {
             <FilterIcon className="h-4 w-4 mr-2" />
             フィルタ ({showFilters ? '非表示' : '表示'})
           </Button>
-          {(keyword || activeTab !== 'all' || mediaSourceFilter !== 'all' || filterTag || filterDateRange !== 'all' || filterPinned) && (
+          {(keyword || activeTab !== 'all' || mediaSourceFilter !== 'all' /*|| filterTag*/ || filterDateRange !== 'all' || filterPinned) && (
             <Button
               variant="ghost"
               onClick={handleClearFilters}
@@ -165,8 +165,8 @@ export default function DrawerPage() {
 
         {showFilters && (
           <div className="space-y-4 pt-4 border-t border-border mt-4">
-            {/* Tag Filter */}
-            <div>
+            {/* Removed Tag Filter UI */}
+            {/* <div>
               <label htmlFor="filterTag" className="text-sm font-medium">タグで絞り込み</label>
               <Input 
                 id="filterTag"
@@ -175,7 +175,7 @@ export default function DrawerPage() {
                 onChange={(e) => setFilterTag(e.target.value)}
                 className="mt-1"
               />
-            </div>
+            </div> */}
 
             {/* Pinned Filter */}
             <div>

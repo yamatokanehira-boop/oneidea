@@ -14,7 +14,7 @@ import { useAppStore } from "@/lib/store";
 import { CameraIcon, Trash2 } from "lucide-react";
 import { compressImage } from "@/lib/utils";
 import { useLiveQuery } from "dexie-react-hooks";
-import { TagInput } from "@/components/features/tag-input"; // Added TagInput import
+// import { TagInput } from "@/components/features/tag-input"; // TagInput import removed
 
 export default function NewIdeaPage() {
   const router = useRouter();
@@ -31,7 +31,7 @@ export default function NewIdeaPage() {
   });
   const [sourceType, setSourceType] = useState<SourceType>('self');
   const [sourceDetail, setSourceDetail] = useState<SourceDetail>({});
-  const [tags, setTags] = useState<string[]>([]); // Added tags state
+  // const [tags, setTags] = useState<string[]>([]); // tags state removed
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -113,7 +113,7 @@ export default function NewIdeaPage() {
       setSelectedDate(new Date());
       setSourceType('self');
       setSourceDetail({});
-      setTags([]); // Added setTags to resetForm
+      // setTags([]); // setTags removed from resetForm
     };
 
     try {
@@ -131,7 +131,7 @@ export default function NewIdeaPage() {
         cultivation: {},
         ...(photoDataUrl && { photo: photoDataUrl }),
         pinned: false,
-        tags, // Added tags to newIdea object
+        tags: [], // tags property always set to empty array
       };
       await db.ideas.add(newIdea);
       showToast("気づきを保存しました");
@@ -257,10 +257,7 @@ export default function NewIdeaPage() {
         </div>
       </div>
 
-      <div className="space-y-4">
-        <h2 className="font-semibold">タグ (任意)</h2>
-        <TagInput initialTags={tags} onTagsChange={setTags} />
-      </div>
+      {/* タグ入力欄を削除 */}
 
       <div className="space-y-4">
         <h2 className="font-semibold">課題 (Problem)</h2>
