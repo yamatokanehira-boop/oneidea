@@ -8,16 +8,16 @@ import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/features/toaster";
 import { BottomTabBar } from "@/components/layout/bottom-tab-bar";
 import { Header } from "@/components/layout/header";
-import { Camera, CalendarDays } from "lucide-react";
+import { Camera, CalendarDays, HelpCircle, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { SettingsProvider, useSettings } from "@/components/providers/settings-provider";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "@/lib/db";
-import { FileText } from "lucide-react"; // FileTextをインポート
+import { FileText } from "lucide-react";
 
 function AppContent({ children }: { children: React.ReactNode }) {
   const { settings: appSettings, loadSettings, setDbError, setTempCapturedImage } = useAppStore();
-  const { settings: userSettings } = useSettings(); // Our new settings provider
+  const { settings: userSettings } = useSettings();
   const [isClient, setIsClient] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
@@ -25,7 +25,6 @@ function AppContent({ children }: { children: React.ReactNode }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { setTheme } = useTheme();
 
-  // 下書き件数をリアルタイムで購読
   const draftCount = useLiveQuery(() => db.drafts.count(), []);
 
   useEffect(() => {
@@ -33,7 +32,6 @@ function AppContent({ children }: { children: React.ReactNode }) {
     loadSettings();
   }, [loadSettings, setDbError]);
 
-  // Apply fontMode class from our new settings provider
   useEffect(() => {
     if (userSettings?.fontMode) {
       const root = document.documentElement;
@@ -42,7 +40,6 @@ function AppContent({ children }: { children: React.ReactNode }) {
     }
   }, [userSettings?.fontMode]);
 
-  // Apply fontSize class from existing app store
   useEffect(() => {
     if (appSettings?.fontSize) {
       document.documentElement.classList.remove('font-size-sm', 'font-size-md', 'font-size-lg');
@@ -50,7 +47,6 @@ function AppContent({ children }: { children: React.ReactNode }) {
     }
   }, [appSettings?.fontSize]);
 
-  // Apply theme from existing app store
   useEffect(() => {
     if (appSettings?.theme) {
       if (appSettings.theme === 'light' || appSettings.theme === 'dark') {
@@ -119,7 +115,35 @@ function AppContent({ children }: { children: React.ReactNode }) {
     </Link>
   );
 
+  const guideShortcut = (
+    <Link href="/guide" className="flex flex-col items-center justify-center text-xs text-foreground/70 active:scale-95 transition-transform duration-75 ease-out ml-4" aria-label="使い方">
+      <HelpCircle size={20} />
+      <span>使い方</span>
+    </Link>
+  );
+
   const contentReady = isClient && appSettings;
+
+  const messageLinkExtension = isHome && (
+    <Link 
+      href="/message" 
+      className={cn(
+        "fixed left-0 right-0 z-30",
+        "flex items-center justify-center px-4", // Changed to justify-center
+        "h-[44px]", // Height for tap area
+        "bg-background/80 backdrop-blur-sm border-b border-border",
+        "text-foreground hover:bg-accent hover:text-accent-foreground",
+        "active:scale-[0.98] transition-transform duration-75 ease-out",
+        "top-[calc(env(safe-area-inset-top)+56px)]"
+      )}
+      aria-label="ONEIDEAからのメッセージ"
+    >
+      <span className="flex items-center gap-2"> {/* New wrapper for centering text and icon together */}
+        <span className="font-semibold text-sm">ONEIDEAからのメッセージ</span>
+        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+      </span>
+    </Link>
+  );
 
   return (
     <ThemeProvider
@@ -130,7 +154,12 @@ function AppContent({ children }: { children: React.ReactNode }) {
     >
       <div className="flex h-screen flex-col">
         <Header
-          leftContent={isHome ? cameraShortcut : undefined}
+          leftContent={isHome ? (
+            <div className="flex items-center">
+              {cameraShortcut}
+              {guideShortcut}
+            </div>
+          ) : undefined}
           rightContent={
             isHome ? (
               <div className="flex items-center gap-3">
@@ -140,8 +169,9 @@ function AppContent({ children }: { children: React.ReactNode }) {
             ) : undefined
           }
         />
+        {messageLinkExtension} {/* Render new extension here */}
         <Toaster />
-        <main className="flex-1 overflow-y-auto pt-[calc(env(safe-area-inset-top)+56px+24px)] pb-[calc(env(safe-area-inset-bottom)+70px+16px)]">
+        <main className="flex-1 overflow-y-auto pt-[calc(env(safe-area-inset-top)+56px+44px+24px)] pb-[calc(env(safe-area-inset-bottom)+70px+16px)]"> {/* Adjusted pt */}
           <div className="container mx-auto max-w-md px-4">
             {!contentReady ? (
               <div className="flex justify-center items-center h-full">

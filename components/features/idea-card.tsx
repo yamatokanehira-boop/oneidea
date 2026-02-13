@@ -23,12 +23,13 @@ import { useAppStore } from "@/lib/store";
 import { useRouter, usePathname } from "next/navigation";
 import { useSettings } from "@/components/providers/settings-provider";
 import { IdeaEditModal } from "./idea-edit-modal";
-import { HighlightText } from "@/components/ui/highlight-text"; // Added HighlightText import
+import { HighlightText } from "@/components/ui/highlight-text";
+import { Button } from "@/components/ui/button"; // Buttonをインポート
 
 interface IdeaCardProps {
   idea: Idea;
   onDelete?: (id: string) => void;
-  highlightTerms?: string[]; // Added highlightTerms prop
+  highlightTerms?: string[];
 }
 
 const SourceIcon = ({ type }: { type: Idea["sourceType"] }) => {
@@ -105,6 +106,12 @@ export function IdeaCard({ idea, onDelete, highlightTerms }: IdeaCardProps) {
     e.stopPropagation();
     e.preventDefault();
     await db.togglePinned(idea.id);
+  };
+
+  const handleCultivateClick = (e: MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    router.push(`/idea/${idea.id}`);
   };
 
   const { percentage } = getCultivationProgress(idea);
@@ -219,14 +226,29 @@ export function IdeaCard({ idea, onDelete, highlightTerms }: IdeaCardProps) {
             <p className="mt-1 text-right text-xs text-zinc-500">{percentage}% 育成</p>
           </div>
 
-          <div className="flex-grow" />
-
+          {/* New combined footer with Cultivate Button */}
           <div className={cn("flex items-center justify-between text-xs text-zinc-500", densityClasses.footerMargin[cardDensity])}>
-            <div className="flex items-center gap-1">
+            {/* Left: Source */}
+            <div className="flex items-center gap-1 flex-1 text-left min-w-0">
               <SourceIcon type={idea.sourceType} />
-              <span>{SourceTypes[idea.sourceType]}</span>
+              <span className="truncate">{SourceTypes[idea.sourceType]}</span>
             </div>
-            <span>{new Date(idea.createdAt).toLocaleDateString()}</span>
+
+            {/* Center: Cultivate Button */}
+            <div className="flex-none flex justify-center mx-1">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleCultivateClick}
+                aria-label="このアイデアを育成する"
+                className="h-[36px] px-3 py-1 text-xs"
+              >
+                育成する
+              </Button>
+            </div>
+
+            {/* Right: Date */}
+            <span className="flex-1 text-right">{new Date(idea.createdAt).toLocaleDateString()}</span>
           </div>
         </div>
       </Link>

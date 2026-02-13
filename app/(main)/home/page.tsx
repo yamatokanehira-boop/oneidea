@@ -66,6 +66,8 @@ export default function HomePage() {
         </Link>
       </section>
 
+
+
       <section>
         <h2 className="text-xl font-semibold">最近のアイデア</h2>
         <div className="mt-4 space-y-4">

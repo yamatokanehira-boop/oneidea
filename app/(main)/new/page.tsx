@@ -15,6 +15,7 @@ import { CameraIcon, Trash2 } from "lucide-react";
 import { compressImage } from "@/lib/utils";
 import { useLiveQuery } from "dexie-react-hooks";
 // import { TagInput } from "@/components/features/tag-input"; // TagInput import removed
+// import { Card, CardContent } from "@/components/ui/card"; // Card, CardContent import removed
 
 export default function NewIdeaPage() {
   const router = useRouter();
@@ -256,8 +257,6 @@ export default function NewIdeaPage() {
           )}
         </div>
       </div>
-
-      {/* タグ入力欄を削除 */}
 
       <div className="space-y-4">
         <h2 className="font-semibold">課題 (Problem)</h2>
