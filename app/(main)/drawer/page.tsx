@@ -56,14 +56,14 @@ export default function DrawerPage() {
     return keyword.toLowerCase().split(/\s+/).filter(word => word.length > 0);
   }, [keyword]);
 
-  const filteredIdeas = useMemo(() => {
+  const filteredIdeas = useMemo((): Idea[] => { // Explicitly define return type
     if (!ideas) return [];
 
-    let tempIdeas = ideas;
+    let tempIdeas: Idea[] = ideas; // Assert ideas as Idea[] here
 
     // Apply keyword search (AND condition for multiple words)
     if (searchWords.length > 0) {
-      tempIdeas = tempIdeas.filter(idea => {
+      tempIdeas = tempIdeas.filter((idea: Idea) => { // Explicitly type idea
         const searchableString = getSearchableString(idea);
         return searchWords.every(word => searchableString.includes(word));
       });
@@ -72,14 +72,14 @@ export default function DrawerPage() {
     // Filter by tab
     switch (activeTab) {
       case 'favorite':
-        tempIdeas = tempIdeas.filter(idea => idea.isFavorite);
+        tempIdeas = tempIdeas.filter((idea: Idea) => idea.isFavorite);
         break;
       case 'cultivated':
-        tempIdeas = tempIdeas.filter(idea => idea.isCultivated);
+        tempIdeas = tempIdeas.filter((idea: Idea) => idea.isCultivated);
         break;
       case 'media':
         if (mediaSourceFilter !== 'all') {
-          tempIdeas = tempIdeas.filter(idea => idea.sourceType === mediaSourceFilter);
+          tempIdeas = tempIdeas.filter((idea: Idea) => idea.sourceType === mediaSourceFilter);
         }
         break;
     }
@@ -101,16 +101,16 @@ export default function DrawerPage() {
       } else { // 30days
         startDate = subDays(now, 30);
       }
-      tempIdeas = tempIdeas.filter(idea => new Date(idea.createdAt) >= startDate);
+      tempIdeas = tempIdeas.filter((idea: Idea) => new Date(idea.createdAt) >= startDate);
     }
 
     // Filter by pinned status
     if (filterPinned) {
-      tempIdeas = tempIdeas.filter(idea => idea.pinned);
+      tempIdeas = tempIdeas.filter((idea: Idea) => idea.pinned);
     }
     
     // Sort ideas: pinned=true first, then by createdAt desc
-    tempIdeas.sort((a, b) => {
+    tempIdeas.sort((a: Idea, b: Idea) => { // Explicitly type a, b
       // Pinned items come first
       if (a.pinned && !b.pinned) return -1;
       if (!a.pinned && b.pinned) return 1;
