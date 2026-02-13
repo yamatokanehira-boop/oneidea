@@ -56,14 +56,14 @@ export default function DrawerPage() {
     return keyword.toLowerCase().split(/\s+/).filter(word => word.length > 0);
   }, [keyword]);
 
-  const filteredIdeas = useMemo((): Idea[] => { // Explicitly define return type
-    if (!ideas) return [];
+  const filteredIdeas = useMemo((): Idea[] => {
+    if (ideas === undefined) return []; // Explicitly check for undefined
 
-    let tempIdeas: Idea[] = ideas; // Assert ideas as Idea[] here
+    let tempIdeas: Idea[] = ideas; // Now 'ideas' is definitely Idea[] here
 
     // Apply keyword search (AND condition for multiple words)
     if (searchWords.length > 0) {
-      tempIdeas = tempIdeas.filter((idea: Idea) => { // Explicitly type idea
+      tempIdeas = tempIdeas.filter((idea: Idea) => {
         const searchableString = getSearchableString(idea);
         return searchWords.every(word => searchableString.includes(word));
       });
@@ -110,7 +110,7 @@ export default function DrawerPage() {
     }
     
     // Sort ideas: pinned=true first, then by createdAt desc
-    tempIdeas.sort((a: Idea, b: Idea) => { // Explicitly type a, b
+    tempIdeas.sort((a: Idea, b: Idea) => {
       // Pinned items come first
       if (a.pinned && !b.pinned) return -1;
       if (!a.pinned && b.pinned) return 1;
