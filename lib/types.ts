@@ -47,6 +47,8 @@ export interface Idea {
   deepSolution?: string;
   deepValueDetail?: string;
   detailText?: string;
+  pinned: boolean;
+  tags: string[];
 }
 
 export type IdeaStatus = 'FLASH' | 'FOSTERED' | 'BEST';
@@ -55,7 +57,7 @@ export type IdeaStatus = 'FLASH' | 'FOSTERED' | 'BEST';
 export type WeekStartsOn = 0 | 1; // 0 for Sunday, 1 for Monday
 export type AppTheme = 'system' | 'light' | 'dark';
 export type FontSize = 'sm' | 'md' | 'lg'; // Small, Medium, Large
-export type AfterNewIdeaBehavior = 'home' | 'continue';
+export type AfterNewIdeaBehavior = 'home' | 'continue' | 'detail';
 
 export interface AppSettings {
   id: string; // Always 'appSettings' for single entry
@@ -66,4 +68,16 @@ export interface AppSettings {
   fontSize: FontSize;
   afterNewIdeaBehavior: AfterNewIdeaBehavior;
   hasShownSplash: boolean;
+  cardDensity: CardDensity;
+  fontMode: FontMode;
+}
+
+export type CardDensity = 'compact' | 'standard' | 'spacious';
+export type FontMode = 'rounded' | 'gothic' | 'mincho';
+
+export interface Draft {
+  id: string;
+  text: string;
+  createdAt: number;
+  updatedAt: number;
 }

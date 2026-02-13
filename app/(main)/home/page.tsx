@@ -39,8 +39,18 @@ export default function HomePage() {
   }, [settings]);
 
   const [weeklyCount, allIdeas] = homeData || [0, []];
-  // Filter allIdeas to get only those with cultivation input and then take the recent 7
-  const recentIdeas = allIdeas.filter(idea => hasAnyCultivationInput(idea)).slice(0, 7);
+  // Filter allIdeas to get only those with cultivation input, sort by pinned and createdAt, then take the recent 7
+  const recentIdeas = allIdeas
+    .filter(idea => hasAnyCultivationInput(idea))
+    .sort((a, b) => {
+      // Pinned items come first
+      if (a.pinned && !b.pinned) return -1;
+      if (!a.pinned && b.pinned) return 1;
+
+      // For items with the same pinned status, sort by createdAt descending
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    })
+    .slice(0, 7);
 
 
   return (

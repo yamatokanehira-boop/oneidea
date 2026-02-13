@@ -3,63 +3,68 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAppStore } from "@/lib/store";
-import { ThemeProvider, useTheme } from "next-themes"; // useTheme をインポート
+import { ThemeProvider, useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/features/toaster";
 import { BottomTabBar } from "@/components/layout/bottom-tab-bar";
 import { Header } from "@/components/layout/header";
 import { Camera, CalendarDays } from "lucide-react";
 import Link from "next/link";
+import { SettingsProvider, useSettings } from "@/components/providers/settings-provider";
+import { useLiveQuery } from "dexie-react-hooks";
+import { db } from "@/lib/db";
+import { FileText } from "lucide-react"; // FileTextをインポート
 
-export default function ClientLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const { settings, loadSettings, setDbError, setTempCapturedImage } = useAppStore();
+function AppContent({ children }: { children: React.ReactNode }) {
+  const { settings: appSettings, loadSettings, setDbError, setTempCapturedImage } = useAppStore();
+  const { settings: userSettings } = useSettings(); // Our new settings provider
   const [isClient, setIsClient] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const isHome = pathname === '/home';
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { setTheme } = useTheme();
 
-  // useTheme フックから setTheme を取得
-  const { setTheme } = useTheme(); 
+  // 下書き件数をリアルタイムで購読
+  const draftCount = useLiveQuery(() => db.drafts.count(), []);
 
   useEffect(() => {
     setIsClient(true);
     loadSettings();
   }, [loadSettings, setDbError]);
 
-  // settings.fontSize に基づいてhtml要素にクラスを追加
+  // Apply fontMode class from our new settings provider
   useEffect(() => {
-    if (settings?.fontSize) {
-      document.documentElement.classList.remove('font-size-sm', 'font-size-md', 'font-size-lg');
-      document.documentElement.classList.add(`font-size-${settings.fontSize}`);
+    if (userSettings?.fontMode) {
+      const root = document.documentElement;
+      root.classList.remove('font-mode-gothic', 'font-mode-rounded', 'font-mode-mincho');
+      root.classList.add(`font-mode-${userSettings.fontMode}`);
     }
-  }, [settings?.fontSize]);
+  }, [userSettings?.fontMode]);
 
-  // settings.theme が変更されたときに next-themes の setTheme を呼び出す
+  // Apply fontSize class from existing app store
   useEffect(() => {
-    if (settings?.theme) {
-      // settings.theme が 'system' の場合は ThemeProvider の enableSystem が処理してくれるため、
-      // 'light' または 'dark' の場合のみ明示的に setTheme を呼び出す
-      if (settings.theme === 'light' || settings.theme === 'dark') {
-        setTheme(settings.theme);
-      } else if (settings.theme === 'system') {
-        // システムテーマの場合は、'system' に設定し直すことで next-themes に自動判定させる
+    if (appSettings?.fontSize) {
+      document.documentElement.classList.remove('font-size-sm', 'font-size-md', 'font-size-lg');
+      document.documentElement.classList.add(`font-size-${appSettings.fontSize}`);
+    }
+  }, [appSettings?.fontSize]);
+
+  // Apply theme from existing app store
+  useEffect(() => {
+    if (appSettings?.theme) {
+      if (appSettings.theme === 'light' || appSettings.theme === 'dark') {
+        setTheme(appSettings.theme);
+      } else if (appSettings.theme === 'system') {
         setTheme('system');
       }
     }
-  }, [settings?.theme, setTheme]); // setTheme を依存配列に追加
+  }, [appSettings?.theme, setTheme]);
 
-
-  // Function to trigger hidden file input
   const handleCaptureClick = useCallback(() => {
     fileInputRef.current?.click();
   }, []);
 
-  // Function to handle image file change
   const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -70,13 +75,11 @@ export default function ClientLayout({
       };
       reader.readAsDataURL(file);
     }
-    // Reset file input value to allow selecting the same file again
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   }, [setTempCapturedImage, router]);
 
-  // Camera shortcut for Home page
   const cameraShortcut = (
     <>
       <button 
@@ -97,7 +100,6 @@ export default function ClientLayout({
     </>
   );
 
-  // Calendar shortcut for Home page
   const calendarShortcut = (
     <Link href="/calendar" className="flex flex-col items-center justify-center text-xs text-foreground/70 active:scale-95 transition-transform duration-75 ease-out">
       <CalendarDays size={20} />
@@ -105,29 +107,44 @@ export default function ClientLayout({
     </Link>
   );
 
-  const contentReady = isClient && settings;
+  const draftsShortcut = (
+    <Link href="/drafts" className="relative flex flex-col items-center justify-center text-xs text-foreground/70 active:scale-95 transition-transform duration-75 ease-out">
+      <FileText size={20} />
+      <span>下書き</span>
+      {draftCount !== undefined && draftCount > 0 && (
+        <div className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-black text-[10px] font-bold text-white">
+          {draftCount > 99 ? '99+' : draftCount}
+        </div>
+      )}
+    </Link>
+  );
+
+  const contentReady = isClient && appSettings;
 
   return (
     <ThemeProvider
       attribute="class"
-
-      defaultTheme="system" // defaultTheme を戻す
-      enableSystem={false} // false に変更
+      defaultTheme="system"
+      enableSystem={false}
       disableTransitionOnChange
     >
       <div className="flex h-screen flex-col">
-        {/* ヘッダーは常に表示 */}
         <Header
           leftContent={isHome ? cameraShortcut : undefined}
-          rightContent={isHome ? calendarShortcut : undefined}
+          rightContent={
+            isHome ? (
+              <div className="flex items-center gap-3">
+                {draftsShortcut}
+                {calendarShortcut}
+              </div>
+            ) : undefined
+          }
         />
         <Toaster />
         <main className="flex-1 overflow-y-auto pt-[calc(env(safe-area-inset-top)+56px+24px)] pb-[calc(env(safe-area-inset-bottom)+70px+16px)]">
           <div className="container mx-auto max-w-md px-4">
-            {/* コンテンツが準備できていない場合はローディング表示 */}
             {!contentReady ? (
               <div className="flex justify-center items-center h-full">
-                {/* ここにローディングスピナーやプレースホルダーを入れる */}
                 <p>読み込み中...</p>
               </div>
             ) : (
@@ -135,9 +152,16 @@ export default function ClientLayout({
             )}
           </div>
         </main>
-        {/* BottomTabBarもcontentReadyに依存する */}
         {contentReady && <BottomTabBar />}
       </div>
     </ThemeProvider>
+  );
+}
+
+export default function ClientLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <SettingsProvider>
+      <AppContent>{children}</AppContent>
+    </SettingsProvider>
   );
 }

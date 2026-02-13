@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react"; // Add useRef, useEffect, useCallback
-import { useRouter, useSearchParams } from "next/navigation"; // Import useSearchParams
+import { useState, useRef, useEffect, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,40 +10,40 @@ import { db } from "@/lib/db";
 import { ProblemCategories, ValueCategories, SourceTypes } from "@/consts";
 import type { ProblemCategory, ValueCategory, SourceType } from "@/consts";
 import type { SourceDetail } from "@/lib/types";
-import { useAppStore } from "@/lib/store"; // useAppStoreをインポート
-import { CameraIcon, Trash2 } from "lucide-react"; // Import CameraIcon, Trash2
-import { compressImage } from "@/lib/utils"; // Import compressImage
-
+import { useAppStore } from "@/lib/store";
+import { CameraIcon, Trash2 } from "lucide-react";
+import { compressImage } from "@/lib/utils";
+import { useLiveQuery } from "dexie-react-hooks";
+import { TagInput } from "@/components/features/tag-input"; // Added TagInput import
 
 export default function NewIdeaPage() {
   const router = useRouter();
-  const { showToast, settings, tempCapturedImage, setTempCapturedImage } = useAppStore(); // settingsとtempCapturedImage, setTempCapturedImageを取得
+  const { showToast, settings, tempCapturedImage, setTempCapturedImage } = useAppStore();
   const [text, setText] = useState("");
   const [detailText, setDetailText] = useState("");
   const [problem, setProblem] = useState<ProblemCategory | null>(null);
   const [value, setValue] = useState<ValueCategory | null>(null);
-  const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null); // State for image data URL
+  const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(() => {
-    const searchParams = new URLSearchParams(window.location.search); // Get search params
-    const dateParam = searchParams.get('date'); // Get date from URL param
+    const searchParams = new URLSearchParams(window.location.search);
+    const dateParam = searchParams.get('date');
     return dateParam ? new Date(dateParam) : new Date();
-  }); // State for selected date
+  });
   const [sourceType, setSourceType] = useState<SourceType>('self');
   const [sourceDetail, setSourceDetail] = useState<SourceDetail>({});
+  const [tags, setTags] = useState<string[]>([]); // Added tags state
 
-  const fileInputRef = useRef<HTMLInputElement>(null); // Ref for hidden file input for manual photo selection
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Load captured image from Zustand if available
   useEffect(() => {
     if (tempCapturedImage) {
       setPhotoDataUrl(tempCapturedImage);
-      setTempCapturedImage(null); // Clear temporary state
+      setTempCapturedImage(null);
     }
   }, [tempCapturedImage, setTempCapturedImage]);
 
   if (!settings) return null;
 
-  // Handle photo file selection (for manual addition)
   const handlePhotoChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -55,17 +55,31 @@ export default function NewIdeaPage() {
       reader.readAsDataURL(file);
     }
     if (fileInputRef.current) {
-      fileInputRef.current.value = ''; // Reset file input to allow re-selecting same file
+      fileInputRef.current.value = '';
     }
   }, []);
 
-  // Handle removing photo
   const handleRemovePhoto = useCallback(() => {
     setPhotoDataUrl(null);
   }, []);
 
   const handleSourceDetailChange = (field: keyof SourceDetail, value: string) => {
     setSourceDetail(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSaveDraft = async () => {
+    if (!text.trim()) {
+      showToast("下書き内容を入力してください。");
+      return;
+    }
+    try {
+      await db.addDraft(text);
+      showToast("下書きに保存しました");
+      router.push("/drafts");
+    } catch (error) {
+      console.error("Failed to save draft:", error);
+      alert("下書きの保存に失敗しました。");
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -75,7 +89,6 @@ export default function NewIdeaPage() {
       return;
     }
     
-    // Source validation
     switch (sourceType) {
       case 'book':
         if (!sourceDetail.title) { alert('書名を入力してください。'); return; }
@@ -91,6 +104,18 @@ export default function NewIdeaPage() {
         break;
     }
 
+    const resetForm = () => {
+      setText("");
+      setDetailText("");
+      setProblem(null);
+      setValue(null);
+      setPhotoDataUrl(null);
+      setSelectedDate(new Date());
+      setSourceType('self');
+      setSourceDetail({});
+      setTags([]); // Added setTags to resetForm
+    };
+
     try {
       const newIdea = {
         id: crypto.randomUUID(),
@@ -105,22 +130,25 @@ export default function NewIdeaPage() {
         sourceDetail: sourceDetail,
         cultivation: {},
         ...(photoDataUrl && { photo: photoDataUrl }),
+        pinned: false,
+        tags, // Added tags to newIdea object
       };
       await db.ideas.add(newIdea);
       showToast("気づきを保存しました");
 
-      if (settings.afterNewIdeaBehavior === 'home') {
-        router.push("/home");
-      } else {
-        // Reset form
-        setText("");
-        setDetailText("");
-        setProblem(null);
-        setValue(null);
-        setPhotoDataUrl(null);
-        setSelectedDate(new Date());
-        setSourceType('self');
-        setSourceDetail({});
+      switch (settings.afterNewIdeaBehavior) {
+        case 'detail':
+          router.push(`/idea/${newIdea.id}`);
+          break;
+        case 'home':
+          router.push("/home");
+          break;
+        case 'continue':
+          resetForm();
+          break;
+        default:
+          router.push("/home");
+          break;
       }
 
     } catch (error) {
@@ -141,8 +169,6 @@ export default function NewIdeaPage() {
           required
         />
         
-
-
         <div className="space-y-2 mt-4">
           <label htmlFor="detailText" className="text-sm font-medium">詳細 (任意)</label>
           <Textarea
@@ -163,9 +189,9 @@ export default function NewIdeaPage() {
             <img src={photoDataUrl} alt="Preview" className="w-full h-full object-cover" />
             <Button
               type="button"
-              variant="destructive"
+              variant="ghost"
               size="icon"
-              className="absolute top-1 right-1 h-6 w-6 rounded-full"
+              className="absolute top-1 right-1 h-6 w-6 rounded-full text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               onClick={handleRemovePhoto}
             >
               <Trash2 size={16} />
@@ -198,7 +224,7 @@ export default function NewIdeaPage() {
               variant={sourceType === key ? "default" : "outline"}
               onClick={() => {
                 setSourceType(key as SourceType);
-                setSourceDetail({}); // Reset details on change
+                setSourceDetail({});
               }}
               className="cursor-pointer"
             >
@@ -229,6 +255,11 @@ export default function NewIdeaPage() {
             <Input placeholder="詳細（必須）" value={sourceDetail.note || ''} onChange={e => handleSourceDetailChange('note', e.target.value)} />
           )}
         </div>
+      </div>
+
+      <div className="space-y-4">
+        <h2 className="font-semibold">タグ (任意)</h2>
+        <TagInput initialTags={tags} onTagsChange={setTags} />
       </div>
 
       <div className="space-y-4">
@@ -263,9 +294,14 @@ export default function NewIdeaPage() {
         </div>
       </div>
 
-      <Button type="submit" className="w-full" disabled={!text || !problem || !value}>
-        気づきを保存
-      </Button>
+      <div className="flex items-center gap-4">
+        <Button type="button" variant="outline" className="flex-1" onClick={handleSaveDraft} disabled={!text}>
+          下書きに保存
+        </Button>
+        <Button type="submit" className="flex-1" disabled={!text || !problem || !value}>
+          気づきを保存
+        </Button>
+      </div>
     </form>
   );
 }

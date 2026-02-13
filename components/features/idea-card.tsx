@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { type MouseEvent, useState } from "react"; // useState をインポート
+import { type MouseEvent, useState } from "react";
 import { type Idea } from "@/lib/types";
 import { db } from "@/lib/db";
 import { cn } from "@/lib/utils";
@@ -13,17 +13,22 @@ import {
   Sparkles,
   MoreHorizontal,
   Trash2,
-  Pencil, // Pencil をインポート
+  Pencil,
+  Pin,
+  PinOff,
 } from "lucide-react";
-import { SourceTypes, ProblemCategories, ValueCategories } from "@/consts"; // ProblemCategories, ValueCategories も必要
+import { SourceTypes, ProblemCategories, ValueCategories } from "@/consts";
 import { getCultivationProgress } from "@/lib/utils";
 import { useAppStore } from "@/lib/store";
 import { useRouter, usePathname } from "next/navigation";
-import { IdeaEditModal } from "./idea-edit-modal"; // IdeaEditModal をインポート
+import { useSettings } from "@/components/providers/settings-provider";
+import { IdeaEditModal } from "./idea-edit-modal";
+import { HighlightText } from "@/components/ui/highlight-text"; // Added HighlightText import
 
 interface IdeaCardProps {
   idea: Idea;
   onDelete?: (id: string) => void;
+  highlightTerms?: string[]; // Added highlightTerms prop
 }
 
 const SourceIcon = ({ type }: { type: Idea["sourceType"] }) => {
@@ -43,11 +48,12 @@ const SourceIcon = ({ type }: { type: Idea["sourceType"] }) => {
   }
 };
 
-export function IdeaCard({ idea, onDelete }: IdeaCardProps) {
+export function IdeaCard({ idea, onDelete, highlightTerms }: IdeaCardProps) {
   const { showToast } = useAppStore();
+  const { settings } = useSettings();
   const router = useRouter();
   const pathname = usePathname();
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false); // モーダルの開閉状態
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const handleFavoriteToggle = async (e: MouseEvent) => {
     e.stopPropagation();
@@ -95,52 +101,112 @@ export function IdeaCard({ idea, onDelete }: IdeaCardProps) {
     }
   };
 
+  const handleTogglePinned = async (e: MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    await db.togglePinned(idea.id);
+  };
+
   const { percentage } = getCultivationProgress(idea);
+  const cardDensity = settings.cardDensity;
+
+  const densityClasses = {
+    padding: {
+      compact: "p-2",
+      standard: "p-4",
+      spacious: "p-6",
+    },
+    gap: {
+      compact: "gap-1",
+      standard: "gap-2",
+      spacious: "gap-4",
+    },
+    title: {
+      compact: "text-base",
+      standard: "text-base", // font-semibold is enough
+      spacious: "text-lg",
+    },
+    detailText: {
+      compact: "text-xs line-clamp-3",
+      standard: "text-sm line-clamp-2",
+      spacious: "text-sm",
+    },
+    progressMargin: {
+      compact: "mt-1",
+      standard: "mt-2",
+      spacious: "mt-3",
+    },
+    footerMargin: {
+      compact: "mt-2",
+      standard: "mt-4",
+      spacious: "mt-6",
+    }
+  };
 
   return (
-    <> {/* Fragment で囲む */}
+    <>
       <Link
         href={`/idea/${idea.id}`}
         className="block rounded-lg border bg-card text-card-foreground shadow-sm transition-shadow hover:shadow-md"
       >
-        <div className="flex flex-col h-full p-4">
+        <div className={cn("flex flex-col h-full", densityClasses.padding[cardDensity])}>
           <div className="flex justify-between items-start gap-4">
-            <p className="font-semibold leading-tight flex-1">{idea.text}</p>
-            <div className="flex items-center gap-2 -mr-2 -mt-1">
+            <HighlightText
+              text={idea.text}
+              highlight={highlightTerms}
+              className={cn("leading-tight flex-1", densityClasses.title[cardDensity], cardDensity === 'compact' ? "font-normal" : "font-semibold" )}
+            />
+            <div className={cn("flex items-center -mr-2 -mt-1", densityClasses.gap[cardDensity])}>
+               {/* Buttons are slightly smaller in compact mode */}
               <button
-                onClick={handleEdit}
+                onClick={handleTogglePinned}
                 className="p-1 text-zinc-400 hover:text-foreground"
               >
-                <Pencil className="h-6 w-6" />
+                {idea.pinned ? (
+                  <Pin className={cn(cardDensity === 'compact' ? "h-5 w-5" : "h-6 w-6", "fill-current text-foreground")} />
+                ) : (
+                  <PinOff className={cn(cardDensity === 'compact' ? "h-5 w-5" : "h-6 w-6")} />
+                )}
               </button>
-              <button
-                onClick={handleFavoriteToggle}
-                className="p-1 text-zinc-400 hover:text-foreground"
-              >
-                <Heart
-                  className={cn(
-                    "h-6 w-6",
-                    idea.isFavorite && "fill-current text-foreground"
-                  )}
-                />
+              <button onClick={handleEdit} className="p-1 text-zinc-400 hover:text-foreground">
+                <Pencil className={cn(cardDensity === 'compact' ? "h-5 w-5" : "h-6 w-6")} />
               </button>
-              <button
-                onClick={handleDelete}
-                className="p-1 text-zinc-400 hover:text-red-500"
-              >
-                <Trash2 className="h-6 w-6" />
+              <button onClick={handleFavoriteToggle} className="p-1 text-zinc-400 hover:text-foreground">
+                <Heart className={cn(cardDensity === 'compact' ? "h-5 w-5" : "h-6 w-6", idea.isFavorite && "fill-current text-foreground")} />
+              </button>
+              <button onClick={handleDelete} className="p-1 text-zinc-400 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                <Trash2 className={cn(cardDensity === 'compact' ? "h-5 w-5" : "h-6 w-6")} />
               </button>
             </div>
           </div>
 
           {idea.detailText && (
-            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400 line-clamp-2">
-              {idea.detailText}
-            </p>
+            <HighlightText
+              text={idea.detailText}
+              highlight={highlightTerms}
+              className={cn("text-zinc-600 dark:text-zinc-400", densityClasses.detailText[cardDensity], cardDensity === 'compact' ? 'mt-1' : 'mt-2')}
+            />
           )}
 
-          {/* Progress Bar and Percentage Display */}
-          <div className="mt-2">
+          {idea.tags && idea.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {idea.tags.slice(0, 3).map((tag) => (
+                <span
+                  key={tag}
+                  className="rounded-full border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 text-xs text-gray-700 dark:text-gray-300"
+                >
+                  #{tag}
+                </span>
+              ))}
+              {idea.tags.length > 3 && (
+                <span className="rounded-full border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 text-xs text-gray-700 dark:text-gray-300">
+                  +{idea.tags.length - 3}
+                </span>
+              )}
+            </div>
+          )}
+
+          <div className={cn(densityClasses.progressMargin[cardDensity])}>
             <div className="h-1 bg-zinc-200 dark:bg-zinc-700 rounded-full">
               <div
                 className="h-full rounded-full transition-all duration-500"
@@ -155,7 +221,7 @@ export function IdeaCard({ idea, onDelete }: IdeaCardProps) {
 
           <div className="flex-grow" />
 
-          <div className="mt-4 flex items-center justify-between text-xs text-zinc-500">
+          <div className={cn("flex items-center justify-between text-xs text-zinc-500", densityClasses.footerMargin[cardDensity])}>
             <div className="flex items-center gap-1">
               <SourceIcon type={idea.sourceType} />
               <span>{SourceTypes[idea.sourceType]}</span>

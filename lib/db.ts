@@ -1,10 +1,11 @@
 import Dexie, { type Table } from 'dexie';
-import { type Idea, type AppSettings } from './types';
+import { type Idea, type AppSettings, type Draft } from './types';
 import { type ApplyContextType } from '@/consts';
 
 export class OneIdeaDB extends Dexie {
   ideas!: Table<Idea, string>;
   settings!: Table<AppSettings, string>; // 新規追加
+  drafts!: Table<Draft, string>;
 
   constructor() {
     super('OneIdeaDatabase');
@@ -150,21 +151,119 @@ export class OneIdeaDB extends Dexie {
         }
       });
     });
+    this.version(9).stores({
+      ideas: 'id, text, createdAt, problemCategory, valueCategory, isFavorite, sourceType, isCultivated',
+      settings: 'id',
+      drafts: 'id, updatedAt',
+    });
+    this.version(10).stores({
+      ideas: 'id, text, createdAt, problemCategory, valueCategory, isFavorite, sourceType, isCultivated, pinned', // Add pinned
+      settings: 'id',
+      drafts: 'id, updatedAt',
+    }).upgrade(async tx => {
+      await tx.table('ideas').toCollection().modify(idea => {
+        idea.pinned = false;
+      });
+    });
+    // New version 11 for tags
+    this.version(11).stores({
+      ideas: 'id, text, createdAt, problemCategory, valueCategory, isFavorite, sourceType, isCultivated, pinned, *tags', // Add tags
+      settings: 'id',
+      drafts: 'id, updatedAt',
+    }).upgrade(async tx => {
+      await tx.table('ideas').toCollection().modify(idea => {
+        if (!idea.tags) {
+          idea.tags = [];
+        }
+      });
+    });
   }
 
+  // --- Idea Methods ---
+  async togglePinned(id: string): Promise<void> {
+    const idea = await this.ideas.get(id);
+    if (idea) {
+      await this.ideas.update(id, { pinned: !idea.pinned });
+    }
+  }
+
+  async setTags(id: string, tags: string[]): Promise<void> {
+    await this.ideas.update(id, { tags });
+  }
+  
   // アイデアを削除するメソッド
   async deleteIdea(id: string): Promise<void> {
     await this.ideas.delete(id);
   }
 
+  // --- Draft Methods ---
+  async addDraft(text: string): Promise<string> {
+    const now = Date.now();
+    const newDraft: Draft = {
+      id: crypto.randomUUID(),
+      text,
+      createdAt: now,
+      updatedAt: now,
+    };
+    await this.drafts.add(newDraft);
+    return newDraft.id;
+  }
+
+  async updateDraft(id: string, text: string): Promise<void> {
+    await this.drafts.update(id, {
+      text,
+      updatedAt: Date.now(),
+    });
+  }
+
+  async deleteDraft(id: string): Promise<void> {
+    await this.drafts.delete(id);
+  }
+
+  async convertDraftToIdea(draftId: string): Promise<string> {
+    const draft = await this.drafts.get(draftId);
+    if (!draft) {
+      throw new Error('Draft not found');
+    }
+
+    const newIdea: Idea = {
+      id: crypto.randomUUID(),
+      text: draft.text,
+      createdAt: new Date().toISOString(),
+      problemCategory: 'EFFICIENCY', // Default
+      valueCategory: 'FUNCTIONAL', // Default
+      isFavorite: false,
+      isCultivated: false,
+      sourceType: 'self',
+      sourceDetail: null,
+      cultivation: {},
+      detailText: '',
+      photo: undefined,
+      locationText: undefined,
+      deepProblemDetail: undefined,
+      deepSolution: undefined,
+      deepValueDetail: undefined,
+      pinned: false, // Default for new ideas
+      tags: [],
+    };
+    
+    await this.transaction('rw', this.drafts, this.ideas, async () => {
+      await this.ideas.add(newIdea);
+      await this.drafts.delete(draftId);
+    });
+    
+    return newIdea.id;
+  }
+
   // 全てのデータをリセットするメソッド
   async resetAll(): Promise<void> {
-    await this.transaction('rw', this.ideas, this.settings, async () => {
+    await this.transaction('rw', this.ideas, this.settings, this.drafts, async () => {
       await this.ideas.clear();
       await this.settings.clear();
-      // weeklyBests は null なので、クリアする必要はない
+      await this.drafts.clear();
     });
   }
 }
+
 
 export const db = new OneIdeaDB();

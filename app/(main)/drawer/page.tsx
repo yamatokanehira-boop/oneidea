@@ -3,13 +3,19 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
-import { SourceTypes } from "@/consts";
+import { SourceTypes, ProblemCategories, ValueCategories } from "@/consts";
 import { Input } from "@/components/ui/input";
 import { useState, useMemo } from "react";
 import { type Idea, type SourceType } from "@/lib/types";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { IdeaCard } from "@/components/features/idea-card";
+import { normalizeTag } from "@/lib/utils";
+import { getThisWeekRange } from "@/lib/utils";
+import { subDays } from "date-fns"; // Corrected import and usage
+import { Button } from "@/components/ui/button";
+import { FilterIcon, XCircle, PinIcon, PinOffIcon } from "lucide-react";
 
+// Helper function definition outside the component
 const getSearchableString = (idea: Idea): string => {
   const parts = [
     idea.text,
@@ -19,26 +25,48 @@ const getSearchableString = (idea: Idea): string => {
     idea.sourceDetail?.person,
     idea.sourceDetail?.note,
     idea.sourceDetail?.url,
+    ...(idea.tags || []),
+    idea.cultivation?.memo,
+    idea.cultivation?.nextAction,
+    idea.cultivation?.hypothesis,
+    idea.cultivation?.useCase,
+    idea.cultivation?.applyScene1Note,
+    idea.cultivation?.applyScene2Note,
+    idea.cultivation?.applyScene3Note,
+    ProblemCategories[idea.problemCategory],
+    ValueCategories[idea.valueCategory],
   ];
   return parts.filter(Boolean).join(" ").toLowerCase();
 };
+
+type FilterDateRange = 'all' | '7days' | '30days';
 
 export default function DrawerPage() {
   const [keyword, setKeyword] = useState("");
   const [activeTab, setActiveTab] = useState<'all' | 'media' | 'cultivated' | 'favorite'>('all');
   const [mediaSourceFilter, setMediaSourceFilter] = useState<SourceType | 'all'>('all');
+  const [filterTag, setFilterTag] = useState("");
+  const [filterDateRange, setFilterDateRange] = useState<FilterDateRange>('all');
+  const [filterPinned, setFilterPinned] = useState<boolean>(false);
+  const [showFilters, setShowFilters] = useState<boolean>(false);
 
   const ideas = useLiveQuery(() => db.ideas.orderBy("createdAt").reverse().toArray(), []);
+
+  const searchWords = useMemo(() => {
+    return keyword.toLowerCase().split(/\s+/).filter(word => word.length > 0);
+  }, [keyword]);
 
   const filteredIdeas = useMemo(() => {
     if (!ideas) return [];
 
     let tempIdeas = ideas;
 
-    // Filter by keyword
-    if (keyword) {
-      const lowercasedKeyword = keyword.toLowerCase();
-      tempIdeas = tempIdeas.filter(idea => getSearchableString(idea).includes(lowercasedKeyword));
+    // Apply keyword search (AND condition for multiple words)
+    if (searchWords.length > 0) {
+      tempIdeas = tempIdeas.filter(idea => {
+        const searchableString = getSearchableString(idea);
+        return searchWords.every(word => searchableString.includes(word));
+      });
     }
 
     // Filter by tab
@@ -55,9 +83,53 @@ export default function DrawerPage() {
         }
         break;
     }
+
+    // Filter by tag
+    if (filterTag) {
+      const normalizedFilterTag = normalizeTag(filterTag);
+      if (normalizedFilterTag) {
+        tempIdeas = tempIdeas.filter(idea => idea.tags?.includes(normalizedFilterTag));
+      }
+    }
+
+    // Filter by date range
+    if (filterDateRange !== 'all') {
+      const now = new Date();
+      let startDate: Date;
+      if (filterDateRange === '7days') {
+        startDate = subDays(now, 7);
+      } else { // 30days
+        startDate = subDays(now, 30);
+      }
+      tempIdeas = tempIdeas.filter(idea => new Date(idea.createdAt) >= startDate);
+    }
+
+    // Filter by pinned status
+    if (filterPinned) {
+      tempIdeas = tempIdeas.filter(idea => idea.pinned);
+    }
+    
+    // Sort ideas: pinned=true first, then by createdAt desc
+    tempIdeas.sort((a, b) => {
+      // Pinned items come first
+      if (a.pinned && !b.pinned) return -1;
+      if (!a.pinned && b.pinned) return 1;
+
+      // For items with the same pinned status, sort by createdAt descending
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
     
     return tempIdeas;
-  }, [ideas, keyword, activeTab, mediaSourceFilter]);
+  }, [ideas, searchWords, activeTab, mediaSourceFilter, filterTag, filterDateRange, filterPinned]);
+
+  const handleClearFilters = () => {
+    setKeyword("");
+    setActiveTab('all');
+    setMediaSourceFilter('all');
+    setFilterTag("");
+    setFilterDateRange('all');
+    setFilterPinned(false);
+  };
 
   return (
     <div className="space-y-6 pb-12">
@@ -69,6 +141,69 @@ export default function DrawerPage() {
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
         />
+        
+        <div className="flex justify-between items-center">
+          <Button 
+            variant="ghost" 
+            onClick={() => setShowFilters(!showFilters)}
+            className="px-2 py-1 h-auto text-sm text-muted-foreground"
+          >
+            <FilterIcon className="h-4 w-4 mr-2" />
+            フィルタ ({showFilters ? '非表示' : '表示'})
+          </Button>
+          {(keyword || activeTab !== 'all' || mediaSourceFilter !== 'all' || filterTag || filterDateRange !== 'all' || filterPinned) && (
+            <Button
+              variant="ghost"
+              onClick={handleClearFilters}
+              className="px-2 py-1 h-auto text-sm text-muted-foreground"
+            >
+              <XCircle className="h-4 w-4 mr-2" />
+              クリア
+            </Button>
+          )}
+        </div>
+
+        {showFilters && (
+          <div className="space-y-4 pt-4 border-t border-border mt-4">
+            {/* Tag Filter */}
+            <div>
+              <label htmlFor="filterTag" className="text-sm font-medium">タグで絞り込み</label>
+              <Input 
+                id="filterTag"
+                placeholder="例: #UI" 
+                value={filterTag}
+                onChange={(e) => setFilterTag(e.target.value)}
+                className="mt-1"
+              />
+            </div>
+
+            {/* Pinned Filter */}
+            <div>
+              <label className="text-sm font-medium">ピン留め</label>
+              <Button 
+                variant={filterPinned ? "default" : "outline"} 
+                onClick={() => setFilterPinned(!filterPinned)}
+                className="w-full mt-1"
+              >
+                {filterPinned ? <PinIcon className="h-4 w-4 mr-2" /> : <PinOffIcon className="h-4 w-4 mr-2" />}
+                {filterPinned ? "ピン留め済みのみ" : "すべて表示"}
+              </Button>
+            </div>
+
+            {/* Date Range Filter */}
+            <div>
+              <label className="text-sm font-medium">期間</label>
+              <Tabs value={filterDateRange} onValueChange={(value) => setFilterDateRange(value as FilterDateRange)} className="mt-1">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="all">すべて</TabsTrigger>
+                  <TabsTrigger value="7days">過去7日</TabsTrigger>
+                  <TabsTrigger value="30days">過去30日</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+          </div>
+        )}
+
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
           <TabsList className="grid w-full grid-cols-4">
              <TabsTrigger value="all">すべて</TabsTrigger>
@@ -102,8 +237,9 @@ export default function DrawerPage() {
       </div>
 
       <div className="space-y-4">
+        <p className="text-sm text-muted-foreground">{filteredIdeas?.length || 0}件の気づき</p>
         {filteredIdeas && filteredIdeas.map((idea) => (
-            <IdeaCard idea={idea} key={idea.id} />
+            <IdeaCard idea={idea} key={idea.id} highlightTerms={searchWords} />
         ))}
         {filteredIdeas && filteredIdeas.length === 0 && (
           <p className="py-8 text-center text-sm text-muted-foreground">

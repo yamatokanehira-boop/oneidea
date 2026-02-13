@@ -8,12 +8,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { AppTheme, FontSize, WeekStartsOn, AfterNewIdeaBehavior } from "@/lib/types";
+import { useSettings } from "@/components/providers/settings-provider";
+import { CardDensity, FontMode } from "@/lib/types";
 import { ProblemCategories, ValueCategories, ApplyContextTypes } from "@/consts";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 import { enUS, ja } from 'date-fns/locale'; // 日本語ロケールをインポート
 import { Idea } from "@/lib/types";
 import { useRouter } from "next/navigation"; // useRouter をインポート
-import { AlertCircle } from "lucide-react"; // AlertCircle をインポート
+import Link from "next/link"; // Link をインポート
+import { AlertCircle, FileText } from "lucide-react"; // AlertCircle, FileText をインポート
 
 // PDF Exportの期間フィルタオプション
 const pdfExportPeriodOptions = [
@@ -34,6 +37,7 @@ const applyConditionOptions = Object.entries(ApplyContextTypes).map(([key, label
 
 export default function SettingsPage() {
   const { settings, updateSettings, showToast } = useAppStore();
+  const { settings: userSettings, updateSettings: updateUserAppSettings } = useSettings();
   // const fileInputRef = useRef<HTMLInputElement>(null); // 削除
   const router = useRouter(); // useRouter を取得
 
@@ -44,7 +48,7 @@ export default function SettingsPage() {
   const [pdfSelectedStatuses, setPdfSelectedStatuses] = useState<string[]>([]);
   const [pdfSelectedApplies, setPdfSelectedApplies] = useState<string[]>([]);
 
-  if (!settings) return null; // 設定がロードされるまで何も表示しない
+  if (!settings || !userSettings) return null; // 設定がロードされるまで何も表示しない
 
   // handleExport, handleImportClick, handleFileChange 関数は削除
 
@@ -210,6 +214,28 @@ export default function SettingsPage() {
           </div>
 
           <div>
+            <label className="mb-2 block text-sm font-medium">表示</label>
+            <Tabs value={userSettings.cardDensity} onValueChange={(val) => updateUserAppSettings({ cardDensity: val as CardDensity })}>
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="compact">コンパクト</TabsTrigger>
+                <TabsTrigger value="standard">スタンダード</TabsTrigger>
+                <TabsTrigger value="spacious">スペーシャス</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium">フォント</label>
+            <Tabs value={userSettings.fontMode} onValueChange={(val) => updateUserAppSettings({ fontMode: val as FontMode })}>
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="rounded">丸ゴ</TabsTrigger>
+                <TabsTrigger value="gothic">角ゴ</TabsTrigger>
+                <TabsTrigger value="mincho">明朝</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+
+          <div>
             <label className="mb-2 block text-sm font-medium">文字サイズ</label>
             <Tabs value={settings.fontSize} onValueChange={(val) => updateSettings({ fontSize: val as FontSize })}>
               <TabsList className="grid w-full grid-cols-3">
@@ -233,15 +259,17 @@ export default function SettingsPage() {
           <div>
             <label className="mb-2 block text-sm font-medium">追加後の動き</label>
             <Tabs value={settings.afterNewIdeaBehavior} onValueChange={(val) => updateSettings({ afterNewIdeaBehavior: val as AfterNewIdeaBehavior })}>
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="home">ホームへ戻る</TabsTrigger>
                 <TabsTrigger value="continue">連続入力</TabsTrigger>
+                <TabsTrigger value="detail">詳細へ移動</TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
 
         </CardContent>
       </Card>
+      
 
       {/* データ管理 */}
       <Card>
@@ -332,6 +360,22 @@ export default function SettingsPage() {
               <Button onClick={generatePdfContent} className="w-full">PDF出力</Button>
             </div>
           </div>
+          
+          {/* 下書き箱への導線 */}
+          <div className="space-y-2 pt-6">
+            <h3 className="text-base font-semibold">下書き箱</h3>
+            <p className="text-sm text-muted-foreground">
+              一時保存された気づきを確認・編集できます。
+            </p>
+            <Link href="/drafts" className="block">
+              <Button variant="outline" className="w-full justify-start gap-2">
+                <FileText className="h-4 w-4" />
+                下書き一覧へ
+              </Button>
+            </Link>
+          </div>
+
+
 
           <div className="space-y-2 pt-6"> {/* リセットボタンセクション */}
             <h3 className="text-base font-semibold text-black dark:text-white">

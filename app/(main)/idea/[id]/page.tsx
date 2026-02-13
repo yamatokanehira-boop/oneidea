@@ -14,6 +14,7 @@ import { hasAnyCultivationInput } from "@/lib/utils";
 import { CultivationField } from "@/components/ui/cultivation-field";
 import { ApplySceneSection } from "@/components/features/apply-scene-section";
 import { Cultivation } from "@/lib/types"; // Import Cultivation type
+import { TagInput } from "@/components/features/tag-input";
 
 export default function IdeaDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -90,6 +91,11 @@ export default function IdeaDetailPage({ params }: { params: { id: string } }) {
             <Badge variant="outline">{ValueCategories[idea.valueCategory]}</Badge>
             {hasInputForDisplay && <Badge>育成済み</Badge>}
         </div>
+        {idea.tags && idea.tags.length > 0 && (
+          <div className="mt-4">
+            <TagInput initialTags={idea.tags} onTagsChange={() => {}} disabled={true} />
+          </div>
+        )}
         <div className="mt-6 space-y-2">
           <label htmlFor="detailText" className="text-sm font-medium text-muted-foreground">詳細</label>
           <Textarea

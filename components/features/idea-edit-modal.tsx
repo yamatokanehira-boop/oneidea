@@ -9,6 +9,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { XCircle, Save } from "lucide-react"; // アイコンを追加
+import { useLiveQuery } from "dexie-react-hooks";
+import { db } from "@/lib/db";
+import { TagInput } from "@/components/features/tag-input";
 
 interface IdeaEditModalProps {
   isOpen: boolean;
@@ -24,6 +27,10 @@ export function IdeaEditModal({ isOpen, onClose, idea, onSave }: IdeaEditModalPr
   const [editedValueCategory, setEditedValueCategory] = useState<ValueCategory>(idea.valueCategory);
   const [editedSourceType, setEditedSourceType] = useState<SourceType>(idea.sourceType);
   const [editedSourceDetail, setEditedSourceDetail] = useState<SourceDetail>(idea.sourceDetail || {});
+  const [editedTags, setEditedTags] = useState<string[]>([]); // タグのState
+
+
+
 
   // モーダルが開くたびにstateを初期化
   useEffect(() => {
@@ -34,6 +41,7 @@ export function IdeaEditModal({ isOpen, onClose, idea, onSave }: IdeaEditModalPr
       setEditedValueCategory(idea.valueCategory);
       setEditedSourceType(idea.sourceType);
       setEditedSourceDetail(idea.sourceDetail || {});
+      setEditedTags(idea.tags || []);
     }
   }, [isOpen, idea]);
 
@@ -51,6 +59,8 @@ export function IdeaEditModal({ isOpen, onClose, idea, onSave }: IdeaEditModalPr
       valueCategory: editedValueCategory,
       sourceType: editedSourceType,
       sourceDetail: editedSourceDetail,
+      tags: editedTags,
+
     };
     await onSave(updatedIdea);
     onClose();
@@ -127,6 +137,11 @@ export function IdeaEditModal({ isOpen, onClose, idea, onSave }: IdeaEditModalPr
                 <Input placeholder="詳細（必須）" value={editedSourceDetail.note || ''} onChange={e => handleSourceDetailChange('note', e.target.value)} />
               )}
             </div>
+          </div>
+
+          <div className="space-y-4">
+            <h2 className="font-semibold">タグ (任意)</h2>
+            <TagInput initialTags={editedTags} onTagsChange={setEditedTags} />
           </div>
 
           <div className="space-y-4">
