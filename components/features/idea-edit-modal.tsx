@@ -23,10 +23,10 @@ interface IdeaEditModalProps {
 export function IdeaEditModal({ isOpen, onClose, idea, onSave }: IdeaEditModalProps) {
   const [editedText, setEditedText] = useState(idea.text);
   const [editedDetailText, setEditedDetailText] = useState(idea.detailText || "");
-  const [editedProblemCategory, setEditedProblemCategory] = useState<ProblemCategory>(idea.problemCategory);
-  const [editedValueCategory, setEditedValueCategory] = useState<ValueCategory>(idea.valueCategory);
+  const [editedProblemCategory, setEditedProblemCategory] = useState<ProblemCategory | null>(idea.problemCategory);
+  const [editedValueCategory, setEditedValueCategory] = useState<ValueCategory | null>(idea.valueCategory);
   const [editedSourceType, setEditedSourceType] = useState<SourceType>(idea.sourceType);
-  const [editedSourceDetail, setEditedSourceDetail] = useState<SourceDetail>(idea.sourceDetail || {});
+  const [editedSourceDetail, setEditedSourceDetail] = useState<SourceDetail | null>(idea.sourceDetail || null);
   const [editedTags, setEditedTags] = useState<string[]>([]); // タグのState
 
 
@@ -117,24 +117,24 @@ export function IdeaEditModal({ isOpen, onClose, idea, onSave }: IdeaEditModalPr
             <div className="space-y-2 mt-2">
               {editedSourceType === 'book' && (
                 <>
-                  <Input placeholder="書名（必須）" value={editedSourceDetail.title || ''} onChange={e => handleSourceDetailChange('title', e.target.value)} />
-                  <Input placeholder="著者" value={editedSourceDetail.author || ''} onChange={e => handleSourceDetailChange('author', e.target.value)} />
+                  <Input placeholder="書名（必須）" value={editedSourceDetail?.title || ''} onChange={e => handleSourceDetailChange('title', e.target.value)} />
+                  <Input placeholder="著者" value={editedSourceDetail?.author || ''} onChange={e => handleSourceDetailChange('author', e.target.value)} />
                 </>
               )}
               {editedSourceType === 'youtube' && (
                 <>
-                  <Input placeholder="URL（必須）" value={editedSourceDetail.url || ''} onChange={e => handleSourceDetailChange('url', e.target.value)} />
-                  <Input placeholder="タイトル" value={editedSourceDetail.title || ''} onChange={e => handleSourceDetailChange('title', e.target.value)} />
+                  <Input placeholder="URL（必須）" value={editedSourceDetail?.url || ''} onChange={e => handleSourceDetailChange('url', e.target.value)} />
+                  <Input placeholder="タイトル" value={editedSourceDetail?.title || ''} onChange={e => handleSourceDetailChange('title', e.target.value)} />
                 </>
               )}
               {editedSourceType === 'person' && (
                 <>
-                  <Input placeholder="名前（必須）" value={editedSourceDetail.person || ''} onChange={e => handleSourceDetailChange('person', e.target.value)} />
-                  <Input placeholder="肩書き・関係など" value={editedSourceDetail.note || ''} onChange={e => handleSourceDetailChange('note', e.target.value)} />
+                  <Input placeholder="名前（必須）" value={editedSourceDetail?.person || ''} onChange={e => handleSourceDetailChange('person', e.target.value)} />
+                  <Input placeholder="肩書き・関係など" value={editedSourceDetail?.note || ''} onChange={e => handleSourceDetailChange('note', e.target.value)} />
                 </>
               )}
               {editedSourceType === 'other' && (
-                <Input placeholder="詳細（必須）" value={editedSourceDetail.note || ''} onChange={e => handleSourceDetailChange('note', e.target.value)} />
+                <Input placeholder="詳細（必須）" value={editedSourceDetail?.note || ''} onChange={e => handleSourceDetailChange('note', e.target.value)} />
               )}
             </div>
           </div>
