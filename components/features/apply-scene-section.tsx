@@ -21,7 +21,7 @@ export function ApplySceneSection({
   const heading = `${sceneNumber}) 応用先 ${formattedSceneNumber} (カテゴリ)`;
   const description = `このアイデアがどのような場面で役立つか`;
   const noteLabel = `具体的メモ`;
-  const notePlaceholder = `例）授業の導入で使える。週次レビューのテンプレとして使う。`;
+  const notePlaceholder = "記入する";
 
   const handleTypeClick = (type: ApplyContextType) => {
     const currentTypes = selectedTypes || [];

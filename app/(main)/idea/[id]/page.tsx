@@ -102,7 +102,7 @@ export default function IdeaDetailPage({ params }: { params: { id: string } }) {
             id="detailText"
             value={detailText}
             onChange={e => setDetailText(e.target.value)}
-            placeholder="気づいた背景、具体例、なぜ良いと思ったか、など"
+            placeholder="記入する"
             rows={5}
             className="text-base resize-y min-h-[100px]"
           />
@@ -116,21 +116,21 @@ export default function IdeaDetailPage({ params }: { params: { id: string } }) {
             <Textarea
               value={deepProblem}
               onChange={e => setDeepProblem(e.target.value)}
-              placeholder="例: 学生が学生がカフェで勉強中、集中できない"
+              placeholder="記入する"
             />
           </CultivationField>
           <CultivationField label="2) 解決アイディア（工夫）" description="その課題を解決するための具体的なアプローチや独自の工夫" className="space-y-2">
             <Textarea
               value={deepSolution}
               onChange={e => setDeepSolution(e.target.value)}
-              placeholder="例: 環境音を生成するアプリで、好みの集中空間を再現する"
+              placeholder="記入する"
             />
           </CultivationField>
           <CultivationField label="3) 価値の具体（どう良くなる）" description="解決策がもたらすポジティブな変化や、どうすればもっと良くなるか" className="space-y-2">
             <Textarea
               value={deepValue}
               onChange={e => setDeepValue(e.target.value)}
-              placeholder="例: カフェでも自宅でも、ノイズを気にせず高い集中力を維持できる"
+              placeholder="記入する"
             />
           </CultivationField>
           <ApplySceneSection
