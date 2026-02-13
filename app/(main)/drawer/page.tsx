@@ -122,6 +122,7 @@ export default function DrawerPage() {
     });
     
     // Removed filterTag from dependency array
+    return tempIdeas as Idea[]; // Explicitly cast the return value
   }, [ideas, searchWords, activeTab, mediaSourceFilter, filterDateRange, filterPinned]);
 
   const handleClearFilters = () => {
