@@ -34,30 +34,28 @@ export default function HomePage() {
     return Promise.all([
       db.ideas.where('createdAt').between(start, end).count(),
       // Fetch recent 7 ideas, then filter them in memory using hasAnyCultivationInput
-      db.ideas.orderBy("createdAt").reverse().limit(7).toArray(), // Fetch recent 7 ideas
+      db.ideas.orderBy("createdAt").reverse().limit(10).toArray(), // Fetch recent 10 ideas
     ]);
   }, [settings]);
 
-  const [weeklyCount, allIdeas] = homeData || [0, []];
-  // Filter allIdeas to get only those with cultivation input, sort by pinned and createdAt, then take the recent 7
-  const recentIdeas = allIdeas
-    .filter(idea => hasAnyCultivationInput(idea))
-    .sort((a, b) => {
-      // Pinned items come first
-      if (a.pinned && !b.pinned) return -1;
-      if (!a.pinned && b.pinned) return 1;
+  const [weeklyCount, fetchedIdeas] = homeData || [0, []];
+  // The fetchedIdeas from useLiveQuery will already be the latest 10 by createdAt descending.
+  // Apply custom sorting for pinned items within this set of 10.
+  const recentIdeas = fetchedIdeas.sort((a, b) => {
+    // Pinned items come first
+    if (a.pinned && !b.pinned) return -1;
+    if (!a.pinned && b.pinned) return 1;
 
-      // For items with the same pinned status, sort by createdAt descending
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    })
-    .slice(0, 7);
+    // For items with the same pinned status, sort by createdAt descending
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
 
 
   return (
     <div className="space-y-8">
       <section className="text-center">
         <h1 className="text-5xl font-bold tracking-tight">{weeklyCount} / 7</h1>
-        <p className="text-muted-foreground">今週のアイデア</p>
+        <p className="text-muted-foreground">今週のIDEA</p>
         <Link href="/new" passHref>
           <Button size="lg" className="mt-6 w-full rounded-full">
             <Plus className="mr-2 h-5 w-5" />
@@ -69,7 +67,7 @@ export default function HomePage() {
 
 
       <section>
-        <h2 className="text-xl font-semibold">最近のアイデア</h2>
+        <h2 className="text-xl font-semibold">最近のIDEA</h2>
         <div className="mt-4 space-y-4">
           {recentIdeas && recentIdeas.length > 0 ? (
             recentIdeas.map(idea => (
@@ -77,7 +75,7 @@ export default function HomePage() {
             ))
           ) : (
              <p className="py-8 text-center text-sm text-muted-foreground">
-              まだアイデアがありません。
+              まだIDEAがありません。
             </p>
           )}
         </div>

@@ -120,7 +120,7 @@ export default function SettingsPage() {
 
 
     if (targetIdeas.length === 0) {
-      alert("選択された条件に合うアイデアがありません。");
+      alert("選択された条件に合うIDEAがありません。");
       return;
     }
 
@@ -164,7 +164,7 @@ export default function SettingsPage() {
             ${(idea.deepProblemDetail || idea.deepSolution || idea.deepValueDetail || idea.cultivation?.applyScene1Note) ? `
               <div class="deep-dive">
                   ${idea.deepProblemDetail ? `<p><span class="deep-dive-label">課題の具体:</span> ${idea.deepProblemDetail}</p>` : ''}
-                  ${idea.deepSolution ? `<p><span class="deep-dive-label">解決アイディア:</span> ${idea.deepSolution}</p>` : ''}
+                  ${idea.deepSolution ? `<p><span class="deep-dive-label">解決IDEA:</span> ${idea.deepSolution}</p>` : ''}
                   ${idea.deepValueDetail ? `<p><span class="deep-dive-label">価値の具体:</span> ${idea.deepValueDetail}</p>` : ''}
                   ${idea.cultivation?.applyScene1Type?.length ? `<p><span class="deep-dive-label">応用先:</span> ${idea.cultivation.applyScene1Type.map(type => ApplyContextTypes[type]).join(', ')}</p>` : ''}
                   ${idea.cultivation?.applyScene1Note ? `<p><span class="deep-dive-label">応用先メモ:</span> ${idea.cultivation.applyScene1Note}</p>` : ''}
@@ -279,7 +279,7 @@ export default function SettingsPage() {
           <div className="space-y-2">
             <h3 className="text-base font-semibold">PDFで書き出し</h3>
             <p className="text-sm text-muted-foreground">
-              選択した条件のアイデアをPDFとして保存できます。（ブラウザの印刷機能を利用）
+              選択した条件のIDEAをPDFとして保存できます。（ブラウザの印刷機能を利用）
             </p>
             <div className="space-y-4 pt-2">
               <div>

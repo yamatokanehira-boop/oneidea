@@ -119,7 +119,7 @@ export default function IdeaDetailPage({ params }: { params: { id: string } }) {
               placeholder="記入する"
             />
           </CultivationField>
-          <CultivationField label="2) 解決アイディア（工夫）" description="その課題を解決するための具体的なアプローチや独自の工夫" className="space-y-2">
+          <CultivationField label="2) 解決IDEA（工夫）" description="その課題を解決するための具体的なアプローチや独自の工夫" className="space-y-2">
             <Textarea
               value={deepSolution}
               onChange={e => setDeepSolution(e.target.value)}

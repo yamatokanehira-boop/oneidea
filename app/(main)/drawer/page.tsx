@@ -246,7 +246,7 @@ export default function DrawerPage() {
         ))}
         {filteredIdeas && filteredIdeas.length === 0 && (
           <p className="py-8 text-center text-sm text-muted-foreground">
-            条件に合うアイデアはありません。
+            条件に合うIDEAはありません。
           </p>
         )}
       </div>

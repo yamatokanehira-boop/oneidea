@@ -15,7 +15,7 @@ export default function GuidePage() {
 
       <h1 className="text-3xl font-bold text-center">ONEIDEAの使い方</h1>
       <p className="text-center text-muted-foreground mt-2">
-        日常の「なんで？」を、アイデアに育てよう。
+        日常の「なんで？」を、IDEAに育てよう。
       </p>
 
       <div className="space-y-6 mt-8">
@@ -98,7 +98,7 @@ export default function GuidePage() {
             <h3 className="text-xl font-semibold text-center">気づきを保存</h3>
             <p className="text-muted-foreground text-center">
               「<strong className="font-semibold">気づきを保存</strong>」を押すと、その気づきが<br />
-              <strong className="font-semibold">引き出しページに“アイディアカード”として保存</strong>されます。
+              <strong className="font-semibold">引き出しページに“IDEAカード”として保存</strong>されます。
             </p>
           </CardContent>
         </Card>
@@ -106,10 +106,10 @@ export default function GuidePage() {
         {/* New Card: 「アイディアを育成」の説明 */}
         <Card className="p-4">
           <CardContent className="space-y-2">
-            <h3 className="text-xl font-semibold text-center">アイディアを育成する</h3>
+            <h3 className="text-xl font-semibold text-center">IDEAを育成する</h3>
             <p className="text-muted-foreground text-center">
-              引き出しの<strong className="font-semibold">アイディアカードをタップすると</strong>、<br />
-              そのアイディアを<strong className="font-semibold">育成（深める）</strong>できます。
+              引き出しの<strong className="font-semibold">IDEAカードをタップすると</strong>、<br />
+              そのIDEAを<strong className="font-semibold">育成（深める）</strong>できます。
             </p>
           </CardContent>
         </Card>

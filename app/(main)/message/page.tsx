@@ -26,11 +26,11 @@ export default function MessagePage() {
         <p className="leading-relaxed">正解を出さなくていい。</p>
         <p className="leading-relaxed">日常の小さな瞬間に「なんで？」を取り戻すことで、</p>
         <p className="leading-relaxed">いつもの景色に違和感が見つかり、観察が鋭くなり、世界の見え方が変わります。</p>
-        <p className="leading-relaxed">その積み重ねが、毎日をアイデアの源泉に変えていきます。</p>
+        <p className="leading-relaxed">その積み重ねが、毎日をIDEAの源泉に変えていきます。</p>
 
         <p className="leading-relaxed mt-6">ONEIDEAが大事にしているのは、</p>
         <p className="leading-relaxed">うまい答えより、いい違和感。</p>
-        <p className="leading-relaxed">問いは深めるほど、アイデアは具体になる。</p>
+        <p className="leading-relaxed">問いは深めるほど、IDEAは具体になる。</p>
         <p className="leading-relaxed">失敗していい。試すことがクリエイティブ。</p>
 
         <p className="leading-relaxed mt-6">この価値観と一緒に、</p>

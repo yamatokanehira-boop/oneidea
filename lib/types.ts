@@ -32,8 +32,8 @@ export interface Idea {
   id: string;
   text: string;
   createdAt: string; // ISO string
-  problemCategory: ProblemCategory;
-  valueCategory: ValueCategory;
+  problemCategory: ProblemCategory | null;
+  valueCategory: ValueCategory | null;
   
   isFavorite: boolean;
   isCultivated: boolean;

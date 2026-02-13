@@ -85,8 +85,8 @@ export default function NewIdeaPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!text || !problem || !value) {
-      alert("すべての項目を入力してください。");
+    if (!text.trim()) {
+      alert("気づきを1行で記録してください。");
       return;
     }
     
@@ -294,7 +294,7 @@ export default function NewIdeaPage() {
         <Button type="button" variant="outline" className="flex-1" onClick={handleSaveDraft} disabled={!text}>
           下書きに保存
         </Button>
-        <Button type="submit" className="flex-1" disabled={!text || !problem || !value}>
+        <Button type="submit" className="flex-1" disabled={!text}>
           気づきを保存
         </Button>
       </div>

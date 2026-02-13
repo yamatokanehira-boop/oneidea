@@ -240,7 +240,7 @@ export function IdeaCard({ idea, onDelete, highlightTerms }: IdeaCardProps) {
                 size="sm"
                 variant="outline"
                 onClick={handleCultivateClick}
-                aria-label="このアイデアを育成する"
+                aria-label="このIDEAを育成する"
                 className="h-[36px] px-3 py-1 text-xs"
               >
                 育成する

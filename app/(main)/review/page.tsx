@@ -57,7 +57,7 @@ export default function CultivationPage() {
         deepValueDetail: deepValueDetail,
         cultivation: cultivationState,
       });
-      showToast("アイデアを育成しました！");
+      showToast("IDEAを育成しました！");
       setSelectedIdea(null); // Return to list after saving
     } catch (error) {
       console.error("Failed to cultivate idea:", error);
@@ -91,11 +91,11 @@ export default function CultivationPage() {
       <div className="space-y-8">
         <div>
           <h1 className="text-3xl font-bold">育成</h1>
-          <p className="text-muted-foreground">アイデアの種を具体的な形に育てましょう。</p>
+          <p className="text-muted-foreground">IDEAの種を具体的な形に育てましょう。</p>
         </div>
 
         <div className="space-y-2">
-          <h2 className="text-xl font-semibold">育成中のアイデア</h2>
+          <h2 className="text-xl font-semibold">育成中のIDEA</h2>
           <div className="space-y-2">
             {ideasWithCultivationInput && ideasWithCultivationInput.length > 0 ? (
               ideasWithCultivationInput.map((ideaItem: Idea) => (
@@ -116,7 +116,7 @@ export default function CultivationPage() {
                 </div>
               ))
             ) : (
-              <p className="py-8 text-center text-sm text-muted-foreground">育成中のアイデアはありません。</p>
+              <p className="py-8 text-center text-sm text-muted-foreground">育成中のIDEAはありません。</p>
             )}
           </div>
         </div>
@@ -130,7 +130,7 @@ export default function CultivationPage() {
       <div className="flex items-center justify-between">
         <Button variant="ghost" onClick={() => setSelectedIdea(null)} className="flex items-center gap-1 -ml-2">
           <ChevronLeft className="h-5 w-5" />
-          <span>アイデア一覧</span>
+          <span>IDEA一覧</span>
         </Button>
         <h1 className="text-xl font-bold">{selectedIdea.text}</h1>
       </div>
@@ -145,7 +145,7 @@ export default function CultivationPage() {
               placeholder="例: 学生がカフェで勉強中、集中できない"
             />
           </CultivationField>
-          <CultivationField label="2) 解決アイディア（工夫）" description="その課題を解決するための具体的なアプローチや独自の工夫">
+          <CultivationField label="2) 解決IDEA（工夫）" description="その課題を解決するための具体的なアプローチや独自の工夫">
             <Textarea
               value={deepSolution}
               onChange={e => setDeepSolution(e.target.value)}
