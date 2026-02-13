@@ -33,8 +33,8 @@ const getSearchableString = (idea: Idea): string => {
     idea.cultivation?.applyScene1Note,
     idea.cultivation?.applyScene2Note,
     idea.cultivation?.applyScene3Note,
-    ProblemCategories[idea.problemCategory],
-    ValueCategories[idea.valueCategory],
+    idea.problemCategory ? ProblemCategories[idea.problemCategory] : null,
+    idea.valueCategory ? ValueCategories[idea.valueCategory] : null,
   ];
   return parts.filter(Boolean).join(" ").toLowerCase();
 };
