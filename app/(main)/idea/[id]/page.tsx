@@ -87,8 +87,8 @@ export default function IdeaDetailPage({ params }: { params: { id: string } }) {
         <p className="text-muted-foreground">{new Date(idea.createdAt).toLocaleDateString()}</p>
         <h1 className="mt-1 text-3xl font-bold">{idea.text}</h1>
         <div className="mt-4 flex flex-wrap gap-2">
-            <Badge variant="outline">{ProblemCategories[idea.problemCategory]}</Badge>
-            <Badge variant="outline">{ValueCategories[idea.valueCategory]}</Badge>
+            {idea.problemCategory && <Badge variant="outline">{ProblemCategories[idea.problemCategory]}</Badge>}
+            {idea.valueCategory && <Badge variant="outline">{ValueCategories[idea.valueCategory]}</Badge>}
             {hasInputForDisplay && <Badge>育成済み</Badge>}
         </div>
         {idea.tags && idea.tags.length > 0 && (

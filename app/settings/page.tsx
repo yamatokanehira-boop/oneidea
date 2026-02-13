@@ -97,10 +97,10 @@ export default function SettingsPage() {
 
     // 条件フィルタリング (課題、価値、状態、応用先)
     if (pdfSelectedProblems.length > 0) {
-      targetIdeas = targetIdeas.filter(idea => pdfSelectedProblems.includes(idea.problemCategory));
+      targetIdeas = targetIdeas.filter(idea => idea.problemCategory !== null && pdfSelectedProblems.includes(idea.problemCategory));
     }
     if (pdfSelectedValues.length > 0) {
-      targetIdeas = targetIdeas.filter(idea => pdfSelectedValues.includes(idea.valueCategory));
+      targetIdeas = targetIdeas.filter(idea => idea.valueCategory !== null && pdfSelectedValues.includes(idea.valueCategory));
     }
     if (pdfSelectedStatuses.length > 0) {
       targetIdeas = targetIdeas.filter(idea => {
@@ -158,8 +158,8 @@ export default function SettingsPage() {
             </div>
             <div class="idea-text">${idea.text}</div>
             <div class="idea-badges">
-                <span class="badge">${ProblemCategories[idea.problemCategory]}</span>
-                <span class="badge">${ValueCategories[idea.valueCategory]}</span>
+                ${idea.problemCategory ? `<span class="badge">${ProblemCategories[idea.problemCategory]}</span>` : ''}
+                ${idea.valueCategory ? `<span class="badge">${ValueCategories[idea.valueCategory]}</span>` : ''}
             </div>
             ${(idea.deepProblemDetail || idea.deepSolution || idea.deepValueDetail || idea.cultivation?.applyScene1Note) ? `
               <div class="deep-dive">
