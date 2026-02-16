@@ -214,21 +214,21 @@ export default function SettingsPage() {
         <CardContent className="space-y-6">
           <div>
             <label className="mb-2 block text-sm font-medium">テーマ</label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 bg-gray-100 rounded-lg p-1 gap-1 border border-gray-200">
+            <div className="grid grid-cols-3 bg-gray-100 rounded-lg p-1 gap-1 border border-gray-200">
               <Button
-                className={`rounded-md text-sm transition-colors duration-200 h-8 ${settings.theme === 'system' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                className={`rounded-md text-sm transition-colors duration-200 h-8 truncate ${settings.theme === 'system' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
                 onClick={() => updateSettings({ theme: 'system' as AppTheme })}
               >
                 自動
               </Button>
               <Button
-                className={`rounded-md text-sm transition-colors duration-200 h-8 ${settings.theme === 'light' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                className={`rounded-md text-sm transition-colors duration-200 h-8 truncate ${settings.theme === 'light' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
                 onClick={() => updateSettings({ theme: 'light' as AppTheme })}
               >
                 ライト
               </Button>
               <Button
-                className={`rounded-md text-sm transition-colors duration-200 h-8 ${settings.theme === 'dark' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                className={`rounded-md text-sm transition-colors duration-200 h-8 truncate ${settings.theme === 'dark' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
                 onClick={() => updateSettings({ theme: 'dark' as AppTheme })}
               >
                 ダーク
@@ -238,21 +238,21 @@ export default function SettingsPage() {
 
           <div>
             <label className="mb-2 block text-sm font-medium">表示</label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 bg-gray-100 rounded-lg p-1 gap-1 border border-gray-200">
+            <div className="grid grid-cols-3 bg-gray-100 rounded-lg p-1 gap-1 border border-gray-200">
               <Button
-                className={`rounded-md text-sm transition-colors duration-200 h-8 ${userSettings.cardDensity === 'compact' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                className={`rounded-md text-sm transition-colors duration-200 h-8 truncate ${userSettings.cardDensity === 'compact' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
                 onClick={() => updateUserAppSettings({ cardDensity: 'compact' as CardDensity })}
               >
                 コンパクト
               </Button>
               <Button
-                className={`rounded-md text-sm transition-colors duration-200 h-8 ${userSettings.cardDensity === 'standard' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                className={`rounded-md text-sm transition-colors duration-200 h-8 truncate ${userSettings.cardDensity === 'standard' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
                 onClick={() => updateUserAppSettings({ cardDensity: 'standard' as CardDensity })}
               >
                 スタンダード
               </Button>
               <Button
-                className={`rounded-md text-sm transition-colors duration-200 h-8 ${userSettings.cardDensity === 'spacious' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                className={`rounded-md text-sm transition-colors duration-200 h-8 truncate ${userSettings.cardDensity === 'spacious' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
                 onClick={() => updateUserAppSettings({ cardDensity: 'spacious' as CardDensity })}
               >
                 スペーシャス
@@ -262,21 +262,21 @@ export default function SettingsPage() {
 
           <div>
             <label className="mb-2 block text-sm font-medium">フォント</label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 bg-gray-100 rounded-lg p-1 gap-1 border border-gray-200">
+            <div className="grid grid-cols-3 bg-gray-100 rounded-lg p-1 gap-1 border border-gray-200">
               <Button
-                className={`rounded-md text-sm transition-colors duration-200 h-8 ${userSettings.fontMode === 'rounded' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                className={`rounded-md text-sm transition-colors duration-200 h-8 truncate ${userSettings.fontMode === 'rounded' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
                 onClick={() => updateUserAppSettings({ fontMode: 'rounded' as FontMode })}
               >
                 丸ゴ
               </Button>
               <Button
-                className={`rounded-md text-sm transition-colors duration-200 h-8 ${userSettings.fontMode === 'gothic' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                className={`rounded-md text-sm transition-colors duration-200 h-8 truncate ${userSettings.fontMode === 'gothic' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
                 onClick={() => updateUserAppSettings({ fontMode: 'gothic' as FontMode })}
               >
                 角ゴ
               </Button>
               <Button
-                className={`rounded-md text-sm transition-colors duration-200 h-8 ${userSettings.fontMode === 'mincho' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                className={`rounded-md text-sm transition-colors duration-200 h-8 truncate ${userSettings.fontMode === 'mincho' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
                 onClick={() => updateUserAppSettings({ fontMode: 'mincho' as FontMode })}
               >
                 明朝
@@ -286,21 +286,21 @@ export default function SettingsPage() {
 
           <div>
             <label className="mb-2 block text-sm font-medium">文字サイズ</label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 bg-gray-100 rounded-lg p-1 gap-1 border border-gray-200">
+            <div className="grid grid-cols-3 bg-gray-100 rounded-lg p-1 gap-1 border border-gray-200">
               <Button
-                className={`rounded-md text-sm transition-colors duration-200 h-8 ${settings.fontSize === 'sm' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                className={`rounded-md text-sm transition-colors duration-200 h-8 truncate ${settings.fontSize === 'sm' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
                 onClick={() => updateSettings({ fontSize: 'sm' as FontSize })}
               >
                 標準
               </Button>
               <Button
-                className={`rounded-md text-sm transition-colors duration-200 h-8 ${settings.fontSize === 'md' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                className={`rounded-md text-sm transition-colors duration-200 h-8 truncate ${settings.fontSize === 'md' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
                 onClick={() => updateSettings({ fontSize: 'md' as FontSize })}
               >
                 大
               </Button>
               <Button
-                className={`rounded-md text-sm transition-colors duration-200 h-8 ${settings.fontSize === 'lg' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                className={`rounded-md text-sm transition-colors duration-200 h-8 truncate ${settings.fontSize === 'lg' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
                 onClick={() => updateSettings({ fontSize: 'lg' as FontSize })}
               >
                 特大
@@ -312,13 +312,13 @@ export default function SettingsPage() {
             <label className="mb-2 block text-sm font-medium">週の開始</label>
             <div className="grid grid-cols-2 bg-gray-100 rounded-lg p-1 gap-1 border border-gray-200">
               <Button
-                className={`rounded-md text-sm transition-colors duration-200 h-8 ${String(settings.weekStartsOn) === '1' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                className={`rounded-md text-sm transition-colors duration-200 h-8 truncate ${String(settings.weekStartsOn) === '1' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
                 onClick={() => updateSettings({ weekStartsOn: 1 as WeekStartsOn })}
               >
                 月曜
               </Button>
               <Button
-                className={`rounded-md text-sm transition-colors duration-200 h-8 ${String(settings.weekStartsOn) === '0' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                className={`rounded-md text-sm transition-colors duration-200 h-8 truncate ${String(settings.weekStartsOn) === '0' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
                 onClick={() => updateSettings({ weekStartsOn: 0 as WeekStartsOn })}
               >
                 日曜
@@ -328,21 +328,21 @@ export default function SettingsPage() {
           
           <div>
             <label className="mb-2 block text-sm font-medium">追加後の動き</label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 bg-gray-100 rounded-lg p-1 gap-1 border border-gray-200">
+            <div className="grid grid-cols-3 bg-gray-100 rounded-lg p-1 gap-1 border border-gray-200">
               <Button
-                className={`rounded-md text-sm transition-colors duration-200 h-8 ${settings.afterNewIdeaBehavior === 'home' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                className={`rounded-md text-sm transition-colors duration-200 h-8 truncate ${settings.afterNewIdeaBehavior === 'home' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
                 onClick={() => updateSettings({ afterNewIdeaBehavior: 'home' as AfterNewIdeaBehavior })}
               >
                 ホームへ戻る
               </Button>
               <Button
-                className={`rounded-md text-sm transition-colors duration-200 h-8 ${settings.afterNewIdeaBehavior === 'continue' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                className={`rounded-md text-sm transition-colors duration-200 h-8 truncate ${settings.afterNewIdeaBehavior === 'continue' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
                 onClick={() => updateSettings({ afterNewIdeaBehavior: 'continue' as AfterNewIdeaBehavior })}
               >
                 連続入力
               </Button>
               <Button
-                className={`rounded-md text-sm transition-colors duration-200 h-8 ${settings.afterNewIdeaBehavior === 'detail' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                className={`rounded-md text-sm transition-colors duration-200 h-8 truncate ${settings.afterNewIdeaBehavior === 'detail' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
                 onClick={() => updateSettings({ afterNewIdeaBehavior: 'detail' as AfterNewIdeaBehavior })}
               >
                 詳細へ移動
@@ -352,21 +352,21 @@ export default function SettingsPage() {
 
           <div> {/* ホーム表示モードの追加 */}
             <label className="mb-2 block text-sm font-medium">ホーム画面</label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 bg-gray-100 rounded-lg p-1 gap-1 border border-gray-200">
+            <div className="grid grid-cols-3 bg-gray-100 rounded-lg p-1 gap-1 border border-gray-200">
               <Button
-                className={`rounded-md text-sm transition-colors duration-200 h-8 ${settings.homeDisplayMode === 'recent' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                className={`rounded-md text-sm transition-colors duration-200 h-8 truncate ${settings.homeDisplayMode === 'recent' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
                 onClick={() => updateSettings({ homeDisplayMode: 'recent' })}
               >
                 最近のIDEA
               </Button>
               <Button
-                className={`rounded-md text-sm transition-colors duration-200 h-8 ${settings.homeDisplayMode === 'lastWeek' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                className={`rounded-md text-sm transition-colors duration-200 h-8 truncate ${settings.homeDisplayMode === 'lastWeek' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
                 onClick={() => updateSettings({ homeDisplayMode: 'lastWeek' })}
               >
                 先週のIDEA
               </Button>
               <Button
-                className={`rounded-md text-sm transition-colors duration-200 h-8 ${settings.homeDisplayMode === 'random' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                className={`rounded-md text-sm transition-colors duration-200 h-8 truncate ${settings.homeDisplayMode === 'random' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
                 onClick={() => updateSettings({ homeDisplayMode: 'random' })}
               >
                 ランダムIDEA
