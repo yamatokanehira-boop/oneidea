@@ -172,7 +172,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
         />
         {messageLinkExtension} {/* Render new extension here */}
         <Toaster />
-        <main className="flex-1 overflow-y-auto pt-[calc(env(safe-area-inset-top)+56px+44px+24px)] pb-[calc(env(safe-area-inset-bottom)+70px+16px)]"> {/* Adjusted pt */}
+        <main className="flex-1 overflow-y-auto pt-[calc(env(safe-area-inset-top)+56px+44px+24px)] pb-[calc(env(safe-area-inset-bottom)+70px+24px)]"> {/* Adjusted pb */}
           <div className="container mx-auto max-w-md px-4">
             {!contentReady ? (
               <div className="flex justify-center items-center h-full">

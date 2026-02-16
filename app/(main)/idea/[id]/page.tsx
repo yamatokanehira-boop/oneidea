@@ -184,41 +184,23 @@ export default function IdeaDetailPage({ params }: { params: { id: string } }) {
       {/* B) 媒体セクション */}
       {idea.sourceType && (
         <section className="mt-8">
-          <h2 className="text-xl font-semibold">媒体</h2>
-          <div className="mt-4 space-y-2">
-            <p className="text-sm font-medium">{SourceTypes[idea.sourceType]}</p>
-            {idea.sourceDetail && (
-              <div className="space-y-1 text-sm text-muted-foreground">
-                {idea.sourceDetail.title && <p>タイトル: {idea.sourceDetail.title}</p>}
-                {idea.sourceDetail.author && <p>著者: {idea.sourceDetail.author}</p>}
-                {idea.sourceDetail.url && <p>URL: <a href={idea.sourceDetail.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">{idea.sourceDetail.url}</a></p>}
-                {idea.sourceDetail.person && <p>人物: {idea.sourceDetail.person}</p>}
-                {idea.sourceDetail.note && <p>メモ: {idea.sourceDetail.note}</p>}
-              </div>
-            )}
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-muted-foreground">媒体</span>
+            <Badge variant="default" className="text-xs">{SourceTypes[idea.sourceType]}</Badge>
           </div>
+          {idea.sourceDetail && (
+            <div className="mt-4 space-y-1 text-sm text-muted-foreground">
+              {idea.sourceDetail.title && <p>タイトル: {idea.sourceDetail.title}</p>}
+              {idea.sourceDetail.author && <p>著者: {idea.sourceDetail.author}</p>}
+              {idea.sourceDetail.url && <p>URL: <a href={idea.sourceDetail.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">{idea.sourceDetail.url}</a></p>}
+              {idea.sourceDetail.person && <p>人物: {idea.sourceDetail.person}</p>}
+              {idea.sourceDetail.note && <p>メモ: {idea.sourceDetail.note}</p>}
+            </div>
+          )}
         </section>
       )}
 
-      {/* C) 課題セクション */}
-      {idea.problemCategory && (
-        <section className="mt-8">
-          <h2 className="text-xl font-semibold">課題</h2>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Badge variant="outline">{ProblemCategories[idea.problemCategory]}</Badge>
-          </div>
-        </section>
-      )}
 
-      {/* D) 価値セクション */}
-      {idea.valueCategory && (
-        <section className="mt-8">
-          <h2 className="text-xl font-semibold">価値</h2>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Badge variant="outline">{ValueCategories[idea.valueCategory]}</Badge>
-          </div>
-        </section>
-      )}
 
       <Card>
         <CardHeader><CardTitle>育成する</CardTitle></CardHeader>

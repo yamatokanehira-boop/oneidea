@@ -7,7 +7,7 @@ import { SourceTypes, ProblemCategories, ValueCategories } from "@/consts";
 import { Input } from "@/components/ui/input";
 import { useState, useMemo } from "react";
 import { type Idea } from "@/lib/types";
-import { type SourceType } from "@/consts";
+import { type SourceType, type ApplyContextType } from "@/consts";
 
 import { IdeaCard } from "@/components/features/idea-card";
 import { getCultivationProgress } from "@/lib/utils";
@@ -47,6 +47,7 @@ export default function DrawerPage() {
   const [activeTab, setActiveTab] = useState<'all' | 'media' | 'cultivated' | 'favorite'>('all');
   const [mediaSourceFilter, setMediaSourceFilter] = useState<SourceType | 'all'>('all');
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
+  const [grownSubFilter, setGrownSubFilter] = useState<'all' | ApplyContextType>('all');
 
   const ideas = useLiveQuery(() => db.ideas.orderBy("createdAt").reverse().toArray(), []);
 
@@ -78,6 +79,16 @@ export default function DrawerPage() {
         break;
       case 'cultivated':
         tempIdeas = tempIdeas.filter((idea: Idea) => idea.isCultivated);
+        if (grownSubFilter !== 'all') {
+            tempIdeas = tempIdeas.filter(idea => {
+                const targetType = grownSubFilter; // 'WORK', 'LIFE', 'HOBBY'
+                return (
+                    (idea.cultivation?.applyScene1Type && idea.cultivation.applyScene1Type.includes(targetType)) ||
+                    (idea.cultivation?.applyScene2Type && idea.cultivation.applyScene2Type.includes(targetType)) ||
+                    (idea.cultivation?.applyScene3Type && idea.cultivation.applyScene3Type.includes(targetType))
+                );
+            });
+        }
         break;
       case 'media':
         if (mediaSourceFilter !== 'all') {
@@ -114,6 +125,7 @@ export default function DrawerPage() {
     setActiveTab('all');
     setMediaSourceFilter('all');
     setSortOrder('newest');
+    setGrownSubFilter('all');
   };
 
   return (
@@ -160,13 +172,13 @@ export default function DrawerPage() {
               className={`rounded-md text-sm transition-colors duration-200 h-8 ${sortOrder === 'progress_high' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
               onClick={() => setSortOrder('progress_high')}
             >
-              育成％ 高い順
+              育成％高
             </Button>
             <Button
               className={`rounded-md text-sm transition-colors duration-200 h-8 ${sortOrder === 'progress_low' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
               onClick={() => setSortOrder('progress_low')}
             >
-              育成％ 低い順
+              育成％低
             </Button>
           </div>
         </div>
@@ -180,13 +192,17 @@ export default function DrawerPage() {
               onClick={() => {
                 setActiveTab('all');
                 setMediaSourceFilter('all');
+                setGrownSubFilter('all'); // grownSubFilterをリセット
               }}
             >
               すべて
             </Button>
             <Button
               className={`rounded-md text-sm transition-colors duration-200 h-8 ${activeTab === 'media' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
-              onClick={() => setActiveTab('media')}
+              onClick={() => {
+                setActiveTab('media');
+                setGrownSubFilter('all'); // grownSubFilterをリセット
+              }}
             >
               媒体
             </Button>
@@ -204,6 +220,7 @@ export default function DrawerPage() {
               onClick={() => {
                 setActiveTab('favorite');
                 setMediaSourceFilter('all');
+                setGrownSubFilter('all'); // grownSubFilterをリセット
               }}
             >
               お気に入り
@@ -226,6 +243,34 @@ export default function DrawerPage() {
                   {label}
                 </Button>
               ))}
+            </div>
+          )}
+          {activeTab === 'cultivated' && (
+            <div className="flex flex-nowrap gap-1 pt-2 overflow-x-auto">
+              <Button
+                className={`cursor-pointer rounded-md px-2 py-0.5 text-xs h-8 ${grownSubFilter === 'all' ? 'bg-black text-white' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                onClick={() => setGrownSubFilter('all')}
+              >
+                すべて
+              </Button>
+              <Button
+                className={`cursor-pointer rounded-md px-2 py-0.5 text-xs h-8 ${grownSubFilter === 'WORK' ? 'bg-black text-white' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                onClick={() => setGrownSubFilter('WORK')}
+              >
+                仕事
+              </Button>
+              <Button
+                className={`cursor-pointer rounded-md px-2 py-0.5 text-xs h-8 ${grownSubFilter === 'LIFE' ? 'bg-black text-white' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                onClick={() => setGrownSubFilter('LIFE')}
+              >
+                生活
+              </Button>
+              <Button
+                className={`cursor-pointer rounded-md px-2 py-0.5 text-xs h-8 ${grownSubFilter === 'HOBBY' ? 'bg-black text-white' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                onClick={() => setGrownSubFilter('HOBBY')}
+              >
+                趣味
+              </Button>
             </div>
           )}
         </div>
