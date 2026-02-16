@@ -521,7 +521,7 @@ export default function SettingsPage() {
             <p className="mt-1"><span className="font-bold">機能的価値:</span> 製品やサービスが持つ具体的な機能や性能の向上。</p>
             <p className="mt-1"><span className="font-bold">情緒的価値:</span> ユーザーの感情や感覚に訴えかける喜び、感動、安心感。</p>
             <p className="mt-1"><span className="font-bold">経済的価値:</span> コスト削減、収益向上、時間短縮など金銭的・資源的な恩恵。</p>
-            <p className="mt-1"><span class="font-bold">社会/環境価値:</span> 社会貢献、環境保護、倫理的配慮など、より広い範囲への良い影響。</p>
+            <p className="mt-1"><span className="font-bold">社会/環境価値:</span> 社会貢献、環境保護、倫理的配慮など、より広い範囲への良い影響。</p>
           </div>
         </CardContent>
       </Card>
