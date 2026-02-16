@@ -135,3 +135,51 @@ export const getCultivationProgress = (idea: Idea): { percentage: number; totalF
 
   return { percentage, totalFields: 100 };
 };
+
+export const getNextAction = (idea: Idea): string => {
+  const cultivation = idea.cultivation || {}; // cultivationが存在しない場合を考慮
+  const isFilled = (s?: string | null) => (s ?? "").trim().length > 0;
+  const isAnyTypeSelected = (types?: ApplyContextType[] | null) => (types?.length ?? 0) > 0;
+
+  // 1) deepProblemDetail
+  if (!isFilled(idea.deepProblemDetail)) {
+    return "次：課題の具体 を1行書く（+15%）";
+  }
+
+  // 2) deepSolution
+  if (!isFilled(idea.deepSolution)) {
+    return "次：解決IDEA を1行書く（+15%）";
+  }
+
+  // 3) deepValueDetail
+  if (!isFilled(idea.deepValueDetail)) {
+    return "次：価値の具体 を1行書く（+15%）";
+  }
+
+  // 4) applyScene1Note / applyScene1Type
+  if (!isFilled(cultivation.applyScene1Note)) {
+    return "次：応用先01 のメモを1行書く（+15%）";
+  }
+  if (!isAnyTypeSelected(cultivation.applyScene1Type)) {
+    return "次：応用先01 の用途ボタンを1つ選ぶ（+3%）";
+  }
+
+  // 5) applyScene2Note / applyScene2Type
+  if (!isFilled(cultivation.applyScene2Note)) {
+    return "次：応用先02 のメモを1行書く（+15%）";
+  }
+  if (!isAnyTypeSelected(cultivation.applyScene2Type)) {
+    return "次：応用先02 の用途ボタンを1つ選ぶ（+3%）";
+  }
+
+  // 6) applyScene3Note / applyScene3Type
+  if (!isFilled(cultivation.applyScene3Note)) {
+    return "次：応用先03 のメモを1行書く（+16%）";
+  }
+  if (!isAnyTypeSelected(cultivation.applyScene3Type)) {
+    return "次：応用先03 の用途ボタンを1つ選ぶ（+3%）";
+  }
+
+  return "育成完了！🎉";
+};
+

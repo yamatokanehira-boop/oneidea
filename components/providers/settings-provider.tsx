@@ -19,6 +19,7 @@ const defaultSettings: AppSettings = {
   hasShownSplash: false,
   cardDensity: 'standard',
   fontMode: 'gothic',
+  homeDisplayMode: 'recent', // Added default
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);

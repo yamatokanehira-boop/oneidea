@@ -51,6 +51,7 @@ export default function IdeaDetailPage({ params }: { params: { id: string } }) {
         deepValueDetail: deepValue,
         detailText: detailText,
         cultivation: cultivationState, // cultivationState全体を保存
+        updatedAt: Date.now(), // updatedAtを追加
       });
       showToast("育成内容を保存しました");
       // 保存成功後、元のページに戻る

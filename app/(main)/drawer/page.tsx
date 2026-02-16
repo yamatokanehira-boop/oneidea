@@ -6,17 +6,17 @@ import { Badge } from "@/components/ui/badge";
 import { SourceTypes, ProblemCategories, ValueCategories } from "@/consts";
 import { Input } from "@/components/ui/input";
 import { useState, useMemo } from "react";
-import { type Idea } from "@/lib/types"; // SourceTypeを削除
-import { type SourceType } from "@/consts"; // constsからSourceTypeをインポート
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { IdeaCard } from "@/components/features/idea-card";
-// import { normalizeTag } from "@/lib/utils"; // Removed normalizeTag import
-import { getThisWeekRange } from "@/lib/utils";
-import { subDays } from "date-fns";
-import { Button } from "@/components/ui/button";
-import { FilterIcon, XCircle, PinIcon, PinOffIcon } from "lucide-react";
+import { type Idea } from "@/lib/types";
+import { type SourceType } from "@/consts";
 
-// Helper function definition outside the component
+import { IdeaCard } from "@/components/features/idea-card";
+import { getCultivationProgress } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { XCircle } from "lucide-react"; // XCircleを再インポート
+
+import { useAppStore } from "@/lib/store";
+import { useSettings } from "@/components/providers/settings-provider";
+
 const getSearchableString = (idea: Idea): string => {
   const parts = [
     idea.text,
@@ -26,7 +26,6 @@ const getSearchableString = (idea: Idea): string => {
     idea.sourceDetail?.person,
     idea.sourceDetail?.note,
     idea.sourceDetail?.url,
-    // ...(idea.tags || []), // Removed tags from searchable string
     idea.cultivation?.memo,
     idea.cultivation?.nextAction,
     idea.cultivation?.hypothesis,
@@ -40,16 +39,14 @@ const getSearchableString = (idea: Idea): string => {
   return parts.filter(Boolean).join(" ").toLowerCase();
 };
 
-type FilterDateRange = 'all' | '7days' | '30days';
+type SortOrder = 'newest' | 'oldest' | 'progress_high' | 'progress_low';
 
 export default function DrawerPage() {
+  const { settings } = useAppStore();
   const [keyword, setKeyword] = useState("");
   const [activeTab, setActiveTab] = useState<'all' | 'media' | 'cultivated' | 'favorite'>('all');
   const [mediaSourceFilter, setMediaSourceFilter] = useState<SourceType | 'all'>('all');
-  // const [filterTag, setFilterTag] = useState(""); // Removed filterTag state
-  const [filterDateRange, setFilterDateRange] = useState<FilterDateRange>('all');
-  const [filterPinned, setFilterPinned] = useState<boolean>(false);
-  const [showFilters, setShowFilters] = useState<boolean>(false);
+  const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
 
   const ideas = useLiveQuery(() => db.ideas.orderBy("createdAt").reverse().toArray(), []);
 
@@ -57,16 +54,18 @@ export default function DrawerPage() {
     return keyword.toLowerCase().split(/\s+/).filter(word => word.length > 0);
   }, [keyword]);
 
+
+
   const filteredIdeas = useMemo((): Idea[] => {
-    if (ideas === undefined) { // Explicitly check for undefined
+    if (!settings || ideas === undefined) {
       return [];
     }
 
-    let tempIdeas = ideas; // Let TypeScript infer after the guard
+    let tempIdeas = ideas;
 
     // Apply keyword search (AND condition for multiple words)
     if (searchWords.length > 0) {
-      tempIdeas = tempIdeas.filter((idea: Idea) => { // Explicitly type idea
+      tempIdeas = tempIdeas.filter((idea: Idea) => {
         const searchableString = getSearchableString(idea);
         return searchWords.every(word => searchableString.includes(word));
       });
@@ -87,52 +86,34 @@ export default function DrawerPage() {
         break;
     }
 
-    // Removed tag filtering logic
-    // if (filterTag) {
-    //   const normalizedFilterTag = normalizeTag(filterTag);
-    //   if (normalizedFilterTag) {
-    //     tempIdeas = tempIdeas.filter(idea => idea.tags?.includes(normalizedFilterTag));
-    //   }
-    // }
-
-    // Filter by date range
-    if (filterDateRange !== 'all') {
-      const now = new Date();
-      let startDate: Date;
-      if (filterDateRange === '7days') {
-        startDate = subDays(now, 7);
-      } else { // 30days
-        startDate = subDays(now, 30);
-      }
-      tempIdeas = tempIdeas.filter((idea: Idea) => new Date(idea.createdAt) >= startDate);
-    }
-
-    // Filter by pinned status
-    if (filterPinned) {
-      tempIdeas = tempIdeas.filter((idea: Idea) => idea.pinned);
-    }
-    
-    // Sort ideas: pinned=true first, then by createdAt desc
-    tempIdeas.sort((a: Idea, b: Idea) => { // Explicitly type a, b
-      // Pinned items come first
+    // Apply sorting
+    const sortedIdeas = [...tempIdeas].sort((a, b) => {
+      // Pinned items always come first (既存のソートロジックを維持しつつ、ソート順の前に適用)
       if (a.pinned && !b.pinned) return -1;
       if (!a.pinned && b.pinned) return 1;
 
-      // For items with the same pinned status, sort by createdAt descending
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      // 以下、選択された並び替え順序
+      switch (sortOrder) {
+        case 'oldest':
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        case 'progress_high':
+          return getCultivationProgress(b).percentage - getCultivationProgress(a).percentage;
+        case 'progress_low':
+          return getCultivationProgress(a).percentage - getCultivationProgress(b).percentage;
+        case 'newest': // デフォルトまたは明示的な'newest'
+        default:
+          return new Date(b.createdAt).getTime() - new Date(b.createdAt).getTime();
+      }
     });
     
-    // Removed filterTag from dependency array
-    return tempIdeas as Idea[]; // Explicitly cast the return value
-  }, [ideas, searchWords, activeTab, mediaSourceFilter, filterDateRange, filterPinned]);
+    return sortedIdeas;
+  }, [ideas, searchWords, activeTab, mediaSourceFilter, sortOrder, settings.weekStartsOn]);
 
   const handleClearFilters = () => {
     setKeyword("");
     setActiveTab('all');
     setMediaSourceFilter('all');
-    // setFilterTag(""); // Removed setFilterTag
-    setFilterDateRange('all');
-    setFilterPinned(false);
+    setSortOrder('newest');
   };
 
   return (
@@ -140,22 +121,14 @@ export default function DrawerPage() {
       <h1 className="text-3xl font-bold">引き出し</h1>
       
       <div className="space-y-4">
-        <Input 
-          placeholder="キーワード検索..." 
-          value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
-        />
-        
         <div className="flex justify-between items-center">
-          <Button 
-            variant="ghost" 
-            onClick={() => setShowFilters(!showFilters)}
-            className="px-2 py-1 h-auto text-sm text-muted-foreground"
-          >
-            <FilterIcon className="h-4 w-4 mr-2" />
-            フィルタ ({showFilters ? '非表示' : '表示'})
-          </Button>
-          {(keyword || activeTab !== 'all' || mediaSourceFilter !== 'all' /*|| filterTag*/ || filterDateRange !== 'all' || filterPinned) && (
+          <Input 
+            placeholder="キーワード検索..." 
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            className="flex-grow mr-2"
+          />
+          {(keyword || activeTab !== 'all' || mediaSourceFilter !== 'all' || sortOrder !== 'newest') && (
             <Button
               variant="ghost"
               onClick={handleClearFilters}
@@ -167,77 +140,95 @@ export default function DrawerPage() {
           )}
         </div>
 
-        {showFilters && (
-          <div className="space-y-4 pt-4 border-t border-border mt-4">
-            {/* Removed Tag Filter UI */}
-            {/* <div>
-              <label htmlFor="filterTag" className="text-sm font-medium">タグで絞り込み</label>
-              <Input 
-                id="filterTag"
-                placeholder="例: #UI" 
-                value={filterTag}
-                onChange={(e) => setFilterTag(e.target.value)}
-                className="mt-1"
-              />
-            </div> */}
-
-            {/* Pinned Filter */}
-            <div>
-              <label className="text-sm font-medium">ピン留め</label>
-              <Button 
-                variant={filterPinned ? "default" : "outline"} 
-                onClick={() => setFilterPinned(!filterPinned)}
-                className="w-full mt-1"
-              >
-                {filterPinned ? <PinIcon className="h-4 w-4 mr-2" /> : <PinOffIcon className="h-4 w-4 mr-2" />}
-                {filterPinned ? "ピン留め済みのみ" : "すべて表示"}
-              </Button>
-            </div>
-
-            {/* Date Range Filter */}
-            <div>
-              <label className="text-sm font-medium">期間</label>
-              <Tabs value={filterDateRange} onValueChange={(value) => setFilterDateRange(value as FilterDateRange)} className="mt-1">
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="all">すべて</TabsTrigger>
-                  <TabsTrigger value="7days">過去7日</TabsTrigger>
-                  <TabsTrigger value="30days">過去30日</TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
+        {/* 並び替えブロック */}
+        <div className="space-y-2 border-t border-border mt-4 pt-4">
+          <p className="text-sm font-medium text-gray-700">並び替え</p>
+          <div className="grid grid-cols-4 bg-gray-100 rounded-lg p-1 gap-1 border border-gray-200">
+            <Button
+              className={`rounded-md text-sm transition-colors duration-200 h-8 ${sortOrder === 'newest' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+              onClick={() => setSortOrder('newest')}
+            >
+              新しい順
+            </Button>
+            <Button
+              className={`rounded-md text-sm transition-colors duration-200 h-8 ${sortOrder === 'oldest' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+              onClick={() => setSortOrder('oldest')}
+            >
+              古い順
+            </Button>
+            <Button
+              className={`rounded-md text-sm transition-colors duration-200 h-8 ${sortOrder === 'progress_high' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+              onClick={() => setSortOrder('progress_high')}
+            >
+              育成％ 高い順
+            </Button>
+            <Button
+              className={`rounded-md text-sm transition-colors duration-200 h-8 ${sortOrder === 'progress_low' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+              onClick={() => setSortOrder('progress_low')}
+            >
+              育成％ 低い順
+            </Button>
           </div>
-        )}
+        </div>
 
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
-          <TabsList className="grid w-full grid-cols-4">
-             <TabsTrigger value="all">すべて</TabsTrigger>
-             <TabsTrigger value="media">媒体</TabsTrigger>
-             <TabsTrigger value="cultivated">育成済み</TabsTrigger>
-             <TabsTrigger value="favorite">お気に入り</TabsTrigger>
-          </TabsList>
-        </Tabs>
-
-        {activeTab === 'media' && (
-          <div className="flex flex-wrap gap-2 pt-2">
-            <Badge
-              variant={mediaSourceFilter === 'all' ? 'default' : 'outline'}
-              onClick={() => setMediaSourceFilter('all')}
-              className="cursor-pointer"
+        {/* フィルタブロック */}
+        <div className="space-y-2 border-t border-border mt-4 pt-4">
+          <p className="text-sm font-medium text-gray-700">フィルタ</p>
+          <div className="grid grid-cols-4 bg-gray-100 rounded-lg p-1 gap-1 border border-gray-200">
+            <Button
+              className={`rounded-md text-sm transition-colors duration-200 h-8 ${activeTab === 'all' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+              onClick={() => {
+                setActiveTab('all');
+                setMediaSourceFilter('all');
+              }}
             >
               すべて
-            </Badge>
-            {Object.entries(SourceTypes).map(([key, label]) => (
-              <Badge
-                key={key}
-                variant={mediaSourceFilter === key ? 'default' : 'outline'}
-                onClick={() => setMediaSourceFilter(key as SourceType)}
-                className="cursor-pointer"
-              >
-                {label}
-              </Badge>
-            ))}
+            </Button>
+            <Button
+              className={`rounded-md text-sm transition-colors duration-200 h-8 ${activeTab === 'media' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+              onClick={() => setActiveTab('media')}
+            >
+              媒体
+            </Button>
+            <Button
+              className={`rounded-md text-sm transition-colors duration-200 h-8 ${activeTab === 'cultivated' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+              onClick={() => {
+                setActiveTab('cultivated');
+                setMediaSourceFilter('all');
+              }}
+            >
+              育成済み
+            </Button>
+            <Button
+              className={`rounded-md text-sm transition-colors duration-200 h-8 ${activeTab === 'favorite' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+              onClick={() => {
+                setActiveTab('favorite');
+                setMediaSourceFilter('all');
+              }}
+            >
+              お気に入り
+            </Button>
           </div>
-        )}
+          {activeTab === 'media' && (
+            <div className="flex flex-nowrap gap-1 pt-2 overflow-x-auto">
+              <Button
+                className={`cursor-pointer rounded-md px-2 py-0.5 text-xs h-8 ${mediaSourceFilter === 'all' ? 'bg-black text-white' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                onClick={() => setMediaSourceFilter('all')}
+              >
+                すべて
+              </Button>
+              {Object.entries(SourceTypes).map(([key, label]) => (
+                <Button
+                  key={key}
+                  className={`cursor-pointer rounded-md px-2 py-0.5 text-xs h-8 ${mediaSourceFilter === key ? 'bg-black text-white' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                  onClick={() => setMediaSourceFilter(key as SourceType)}
+                >
+                  {label}
+                </Button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="space-y-4">

@@ -58,6 +58,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         hasShownSplash: true,
         cardDensity: 'standard', // Added default
         fontMode: 'gothic',      // Added default
+        homeDisplayMode: 'recent', // Added default
       };
       await db.settings.add(defaultSettings);
       set({ settings: defaultSettings });

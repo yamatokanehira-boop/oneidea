@@ -5,7 +5,8 @@ import { db } from "@/lib/db";
 import { useAppStore } from "@/lib/store";
 import { useState } from "react"; // useRef は不要になる
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"; // Tabs関連を再インポート
+
 import { Badge } from "@/components/ui/badge";
 import { AppTheme, FontSize, WeekStartsOn, AfterNewIdeaBehavior } from "@/lib/types";
 import { useSettings } from "@/components/providers/settings-provider";
@@ -213,67 +214,164 @@ export default function SettingsPage() {
         <CardContent className="space-y-6">
           <div>
             <label className="mb-2 block text-sm font-medium">テーマ</label>
-            <Tabs value={settings.theme} onValueChange={(val) => updateSettings({ theme: val as AppTheme })}>
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="system">自動</TabsTrigger>
-                <TabsTrigger value="light">ライト</TabsTrigger>
-                <TabsTrigger value="dark">ダーク</TabsTrigger>
-              </TabsList>
-            </Tabs>
+            <div className="flex bg-gray-100 rounded-lg p-1 space-x-1 border border-gray-200">
+              <Button
+                className={`flex-1 rounded-md text-sm transition-colors duration-200 h-8 ${settings.theme === 'system' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                onClick={() => updateSettings({ theme: 'system' as AppTheme })}
+              >
+                自動
+              </Button>
+              <Button
+                className={`flex-1 rounded-md text-sm transition-colors duration-200 h-8 ${settings.theme === 'light' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                onClick={() => updateSettings({ theme: 'light' as AppTheme })}
+              >
+                ライト
+              </Button>
+              <Button
+                className={`flex-1 rounded-md text-sm transition-colors duration-200 h-8 ${settings.theme === 'dark' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                onClick={() => updateSettings({ theme: 'dark' as AppTheme })}
+              >
+                ダーク
+              </Button>
+            </div>
           </div>
 
           <div>
             <label className="mb-2 block text-sm font-medium">表示</label>
-            <Tabs value={userSettings.cardDensity} onValueChange={(val) => updateUserAppSettings({ cardDensity: val as CardDensity })}>
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="compact">コンパクト</TabsTrigger>
-                <TabsTrigger value="standard">スタンダード</TabsTrigger>
-                <TabsTrigger value="spacious">スペーシャス</TabsTrigger>
-              </TabsList>
-            </Tabs>
+            <div className="flex bg-gray-100 rounded-lg p-1 space-x-1 border border-gray-200">
+              <Button
+                className={`flex-1 rounded-md text-sm transition-colors duration-200 h-8 ${userSettings.cardDensity === 'compact' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                onClick={() => updateUserAppSettings({ cardDensity: 'compact' as CardDensity })}
+              >
+                コンパクト
+              </Button>
+              <Button
+                className={`flex-1 rounded-md text-sm transition-colors duration-200 h-8 ${userSettings.cardDensity === 'standard' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                onClick={() => updateUserAppSettings({ cardDensity: 'standard' as CardDensity })}
+              >
+                スタンダード
+              </Button>
+              <Button
+                className={`flex-1 rounded-md text-sm transition-colors duration-200 h-8 ${userSettings.cardDensity === 'spacious' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                onClick={() => updateUserAppSettings({ cardDensity: 'spacious' as CardDensity })}
+              >
+                スペーシャス
+              </Button>
+            </div>
           </div>
 
           <div>
             <label className="mb-2 block text-sm font-medium">フォント</label>
-            <Tabs value={userSettings.fontMode} onValueChange={(val) => updateUserAppSettings({ fontMode: val as FontMode })}>
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="rounded">丸ゴ</TabsTrigger>
-                <TabsTrigger value="gothic">角ゴ</TabsTrigger>
-                <TabsTrigger value="mincho">明朝</TabsTrigger>
-              </TabsList>
-            </Tabs>
+            <div className="flex bg-gray-100 rounded-lg p-1 space-x-1 border border-gray-200">
+              <Button
+                className={`flex-1 rounded-md text-sm transition-colors duration-200 h-8 ${userSettings.fontMode === 'rounded' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                onClick={() => updateUserAppSettings({ fontMode: 'rounded' as FontMode })}
+              >
+                丸ゴ
+              </Button>
+              <Button
+                className={`flex-1 rounded-md text-sm transition-colors duration-200 h-8 ${userSettings.fontMode === 'gothic' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                onClick={() => updateUserAppSettings({ fontMode: 'gothic' as FontMode })}
+              >
+                角ゴ
+              </Button>
+              <Button
+                className={`flex-1 rounded-md text-sm transition-colors duration-200 h-8 ${userSettings.fontMode === 'mincho' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                onClick={() => updateUserAppSettings({ fontMode: 'mincho' as FontMode })}
+              >
+                明朝
+              </Button>
+            </div>
           </div>
 
           <div>
             <label className="mb-2 block text-sm font-medium">文字サイズ</label>
-            <Tabs value={settings.fontSize} onValueChange={(val) => updateSettings({ fontSize: val as FontSize })}>
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="sm">標準</TabsTrigger>
-                <TabsTrigger value="md">大</TabsTrigger>
-                <TabsTrigger value="lg">特大</TabsTrigger>
-              </TabsList>
-            </Tabs>
+            <div className="flex bg-gray-100 rounded-lg p-1 space-x-1 border border-gray-200">
+              <Button
+                className={`flex-1 rounded-md text-sm transition-colors duration-200 h-8 ${settings.fontSize === 'sm' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                onClick={() => updateSettings({ fontSize: 'sm' as FontSize })}
+              >
+                標準
+              </Button>
+              <Button
+                className={`flex-1 rounded-md text-sm transition-colors duration-200 h-8 ${settings.fontSize === 'md' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                onClick={() => updateSettings({ fontSize: 'md' as FontSize })}
+              >
+                大
+              </Button>
+              <Button
+                className={`flex-1 rounded-md text-sm transition-colors duration-200 h-8 ${settings.fontSize === 'lg' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                onClick={() => updateSettings({ fontSize: 'lg' as FontSize })}
+              >
+                特大
+              </Button>
+            </div>
           </div>
 
           <div>
             <label className="mb-2 block text-sm font-medium">週の開始</label>
-            <Tabs value={String(settings.weekStartsOn)} onValueChange={(val) => updateSettings({ weekStartsOn: Number(val) as WeekStartsOn })}>
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="1">月曜</TabsTrigger>
-                <TabsTrigger value="0">日曜</TabsTrigger>
-              </TabsList>
-            </Tabs>
+            <div className="flex bg-gray-100 rounded-lg p-1 space-x-1 border border-gray-200">
+              <Button
+                className={`flex-1 rounded-md text-sm transition-colors duration-200 h-8 ${String(settings.weekStartsOn) === '1' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                onClick={() => updateSettings({ weekStartsOn: 1 as WeekStartsOn })}
+              >
+                月曜
+              </Button>
+              <Button
+                className={`flex-1 rounded-md text-sm transition-colors duration-200 h-8 ${String(settings.weekStartsOn) === '0' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                onClick={() => updateSettings({ weekStartsOn: 0 as WeekStartsOn })}
+              >
+                日曜
+              </Button>
+            </div>
           </div>
           
           <div>
             <label className="mb-2 block text-sm font-medium">追加後の動き</label>
-            <Tabs value={settings.afterNewIdeaBehavior} onValueChange={(val) => updateSettings({ afterNewIdeaBehavior: val as AfterNewIdeaBehavior })}>
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="home">ホームへ戻る</TabsTrigger>
-                <TabsTrigger value="continue">連続入力</TabsTrigger>
-                <TabsTrigger value="detail">詳細へ移動</TabsTrigger>
-              </TabsList>
-            </Tabs>
+            <div className="flex bg-gray-100 rounded-lg p-1 space-x-1 border border-gray-200">
+              <Button
+                className={`flex-1 rounded-md text-sm transition-colors duration-200 h-8 ${settings.afterNewIdeaBehavior === 'home' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                onClick={() => updateSettings({ afterNewIdeaBehavior: 'home' as AfterNewIdeaBehavior })}
+              >
+                ホームへ戻る
+              </Button>
+              <Button
+                className={`flex-1 rounded-md text-sm transition-colors duration-200 h-8 ${settings.afterNewIdeaBehavior === 'continue' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                onClick={() => updateSettings({ afterNewIdeaBehavior: 'continue' as AfterNewIdeaBehavior })}
+              >
+                連続入力
+              </Button>
+              <Button
+                className={`flex-1 rounded-md text-sm transition-colors duration-200 h-8 ${settings.afterNewIdeaBehavior === 'detail' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                onClick={() => updateSettings({ afterNewIdeaBehavior: 'detail' as AfterNewIdeaBehavior })}
+              >
+                詳細へ移動
+              </Button>
+            </div>
+          </div>
+
+          <div> {/* ホーム表示モードの追加 */}
+            <label className="mb-2 block text-sm font-medium">ホーム画面</label>
+            <div className="flex bg-gray-100 rounded-lg p-1 space-x-1 border border-gray-200">
+              <Button
+                className={`flex-1 rounded-md text-sm transition-colors duration-200 h-8 ${settings.homeDisplayMode === 'recent' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                onClick={() => updateSettings({ homeDisplayMode: 'recent' })}
+              >
+                最近のIDEA
+              </Button>
+              <Button
+                className={`flex-1 rounded-md text-sm transition-colors duration-200 h-8 ${settings.homeDisplayMode === 'lastWeek' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                onClick={() => updateSettings({ homeDisplayMode: 'lastWeek' })}
+              >
+                先週のIDEA
+              </Button>
+              <Button
+                className={`flex-1 rounded-md text-sm transition-colors duration-200 h-8 ${settings.homeDisplayMode === 'random' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
+                onClick={() => updateSettings({ homeDisplayMode: 'random' })}
+              >
+                ランダムIDEA
+              </Button>
+            </div>
           </div>
 
         </CardContent>
@@ -423,7 +521,7 @@ export default function SettingsPage() {
             <p className="mt-1"><span className="font-bold">機能的価値:</span> 製品やサービスが持つ具体的な機能や性能の向上。</p>
             <p className="mt-1"><span className="font-bold">情緒的価値:</span> ユーザーの感情や感覚に訴えかける喜び、感動、安心感。</p>
             <p className="mt-1"><span className="font-bold">経済的価値:</span> コスト削減、収益向上、時間短縮など金銭的・資源的な恩恵。</p>
-            <p className="mt-1"><span className="font-bold">社会/環境価値:</span> 社会貢献、環境保護、倫理的配慮など、より広い範囲への良い影響。</p>
+            <p className="mt-1"><span class="font-bold">社会/環境価値:</span> 社会貢献、環境保護、倫理的配慮など、より広い範囲への良い影響。</p>
           </div>
         </CardContent>
       </Card>

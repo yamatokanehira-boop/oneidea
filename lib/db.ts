@@ -13,6 +13,7 @@ const initialSettings: AppSettings = {
   hasShownSplash: true,
   cardDensity: 'standard',
   fontMode: 'gothic',
+  homeDisplayMode: 'recent', // Added default
 };
 
 export class OneIdeaDexie extends Dexie {

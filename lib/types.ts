@@ -73,6 +73,7 @@ export interface AppSettings {
   hasShownSplash: boolean;
   cardDensity: CardDensity;
   fontMode: FontMode;
+  homeDisplayMode: 'recent' | 'lastWeek' | 'random'; // 新しく追加
 }
 
 export type CardDensity = 'compact' | 'standard' | 'spacious';
