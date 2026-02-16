@@ -107,7 +107,7 @@ export default function DrawerPage() {
     });
     
     return sortedIdeas;
-  }, [ideas, searchWords, activeTab, mediaSourceFilter, sortOrder, settings.weekStartsOn]);
+  }, [ideas, searchWords, activeTab, mediaSourceFilter, sortOrder, settings]);
 
   const handleClearFilters = () => {
     setKeyword("");
