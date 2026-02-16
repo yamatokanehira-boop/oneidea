@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { SourceTypes, ProblemCategories, ValueCategories } from "@/consts";
 import { Input } from "@/components/ui/input";
 import { useState, useMemo } from "react";
-import { type Idea, type SourceType } from "@/lib/types";
+import { type Idea } from "@/lib/types"; // SourceTypeを削除
+import { type SourceType } from "@/consts"; // constsからSourceTypeをインポート
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { IdeaCard } from "@/components/features/idea-card";
 // import { normalizeTag } from "@/lib/utils"; // Removed normalizeTag import
@@ -242,7 +243,7 @@ export default function DrawerPage() {
       <div className="space-y-4">
         <p className="text-sm text-muted-foreground">{filteredIdeas?.length || 0}件の気づき</p>
         {filteredIdeas && filteredIdeas.map((idea) => (
-            <IdeaCard idea={idea} key={idea.id} highlightTerms={searchWords} />
+            <IdeaCard idea={idea} key={idea.id} highlightTerms={searchWords} fromPage="drawer" />
         ))}
         {filteredIdeas && filteredIdeas.length === 0 && (
           <p className="py-8 text-center text-sm text-muted-foreground">

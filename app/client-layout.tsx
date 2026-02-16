@@ -23,7 +23,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const isHome = pathname === '/home';
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { setTheme } = useTheme();
+  const { setTheme, theme } = useTheme();
 
   const draftCount = useLiveQuery(() => db.drafts.count(), []);
 
@@ -48,14 +48,14 @@ function AppContent({ children }: { children: React.ReactNode }) {
   }, [appSettings?.fontSize]);
 
   useEffect(() => {
-    if (appSettings?.theme) {
+    if (appSettings?.theme && appSettings.theme !== theme) { // theme と異なる場合に限定
       if (appSettings.theme === 'light' || appSettings.theme === 'dark') {
         setTheme(appSettings.theme);
       } else if (appSettings.theme === 'system') {
         setTheme('system');
       }
     }
-  }, [appSettings?.theme, setTheme]);
+  }, [appSettings?.theme, theme, setTheme]);
 
   const handleCaptureClick = useCallback(() => {
     fileInputRef.current?.click();
@@ -149,7 +149,8 @@ function AppContent({ children }: { children: React.ReactNode }) {
     <ThemeProvider
       attribute="class"
       defaultTheme="system"
-      enableSystem={false}
+      enableSystem={true} // false から true に変更
+      enableColorScheme // 追加
       disableTransitionOnChange
     >
       <div className="flex h-screen flex-col">

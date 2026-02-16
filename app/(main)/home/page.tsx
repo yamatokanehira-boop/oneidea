@@ -71,7 +71,7 @@ export default function HomePage() {
         <div className="mt-4 space-y-4">
           {recentIdeas && recentIdeas.length > 0 ? (
             recentIdeas.map(idea => (
-              <IdeaCard idea={idea} key={idea.id} />
+              <IdeaCard idea={idea} key={idea.id} fromPage="home" />
             ))
           ) : (
              <p className="py-8 text-center text-sm text-muted-foreground">

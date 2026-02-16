@@ -17,9 +17,11 @@ export const ValueCategories = {
 
 export const SourceTypes = {
   self: "自分",
+  person: "人",
   book: "本",
   youtube: "YouTube",
-  person: "人",
+  tv: "テレビ",
+  web: "Web",
   other: "その他",
 } as const;
 

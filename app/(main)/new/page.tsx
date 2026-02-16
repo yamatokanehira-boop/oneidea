@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,32 +9,58 @@ import { Badge } from "@/components/ui/badge";
 import { db } from "@/lib/db";
 import { ProblemCategories, ValueCategories, SourceTypes } from "@/consts";
 import type { ProblemCategory, ValueCategory, SourceType } from "@/consts";
-import type { SourceDetail } from "@/lib/types";
+import type { SourceDetail, Idea } from "@/lib/types";
 import { useAppStore } from "@/lib/store";
 import { CameraIcon, Trash2 } from "lucide-react";
 import { compressImage } from "@/lib/utils";
-import { useLiveQuery } from "dexie-react-hooks";
-// import { TagInput } from "@/components/features/tag-input"; // TagInput import removed
-// import { Card, CardContent } from "@/components/ui/card"; // Card, CardContent import removed
 
 export default function NewIdeaPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <NewIdeaPageContent />
+    </Suspense>
+  );
+}
+
+function NewIdeaPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { showToast, settings, tempCapturedImage, setTempCapturedImage } = useAppStore();
+  
+  const [draftId, setDraftId] = useState<string | null>(null);
   const [text, setText] = useState("");
   const [detailText, setDetailText] = useState("");
   const [problem, setProblem] = useState<ProblemCategory | null>(null);
   const [value, setValue] = useState<ValueCategory | null>(null);
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
-  const [selectedDate, setSelectedDate] = useState<Date>(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    const dateParam = searchParams.get('date');
-    return dateParam ? new Date(dateParam) : new Date();
-  });
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [sourceType, setSourceType] = useState<SourceType>('self');
   const [sourceDetail, setSourceDetail] = useState<SourceDetail>({});
-  // const [tags, setTags] = useState<string[]>([]); // tags state removed
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const libraryInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const id = searchParams.get('draftId');
+    if (id) {
+      setDraftId(id);
+      db.drafts.get(id).then(draft => {
+        if (draft) {
+          setText(draft.text || "");
+          setDetailText(draft.detailText || "");
+          setProblem(draft.problemCategory || null);
+          setValue(draft.valueCategory || null);
+          setPhotoDataUrl(draft.photo || null);
+          setSourceType(draft.sourceType || 'self');
+          setSourceDetail(draft.sourceDetail || {});
+          // createdAtはISO文字列で保存されていると仮定
+          if (draft.createdAt) {
+            setSelectedDate(new Date(draft.createdAt));
+          }
+        }
+      });
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (tempCapturedImage) {
@@ -55,17 +81,33 @@ export default function NewIdeaPage() {
       };
       reader.readAsDataURL(file);
     }
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    if (cameraInputRef.current) cameraInputRef.current.value = '';
+    if (libraryInputRef.current) libraryInputRef.current.value = '';
   }, []);
 
-  const handleRemovePhoto = useCallback(() => {
-    setPhotoDataUrl(null);
-  }, []);
+  const handleRemovePhoto = useCallback(() => setPhotoDataUrl(null), []);
 
   const handleSourceDetailChange = (field: keyof SourceDetail, value: string) => {
     setSourceDetail(prev => ({ ...prev, [field]: value }));
+  };
+  
+  const buildIdeaObject = (): Idea => {
+    return {
+      id: draftId || crypto.randomUUID(),
+      text,
+      detailText,
+      problemCategory: problem,
+      valueCategory: value,
+      createdAt: selectedDate.toISOString(),
+      isFavorite: false,
+      isCultivated: false,
+      sourceType: sourceType,
+      sourceDetail: sourceDetail,
+      cultivation: {},
+      photo: photoDataUrl || undefined,
+      pinned: false,
+      // tags: [], // tagsを削除
+    };
   };
 
   const handleSaveDraft = async () => {
@@ -74,12 +116,13 @@ export default function NewIdeaPage() {
       return;
     }
     try {
-      await db.addDraft(text);
+      const draftData = buildIdeaObject();
+      await db.addDraft(draftData);
       showToast("下書きに保存しました");
       router.push("/drafts");
     } catch (error) {
       console.error("Failed to save draft:", error);
-      alert("下書きの保存に失敗しました。");
+      showToast("下書きの保存に失敗しました。");
     }
   };
 
@@ -90,56 +133,72 @@ export default function NewIdeaPage() {
       return;
     }
     
-    switch (sourceType) {
-      case 'book':
-        if (!sourceDetail.title) { alert('書名を入力してください。'); return; }
-        break;
-      case 'youtube':
-        if (!sourceDetail.url) { alert('YouTubeのURLを入力してください。'); return; }
-        break;
-      case 'person':
-        if (!sourceDetail.person) { alert('名前を入力してください。'); return; }
-        break;
-      case 'other':
-        if (!sourceDetail.note) { alert('詳細を入力してください。'); return; }
-        break;
-    }
-
-    const resetForm = () => {
-      setText("");
-      setDetailText("");
-      setProblem(null);
-      setValue(null);
-      setPhotoDataUrl(null);
-      setSelectedDate(new Date());
-      setSourceType('self');
-      setSourceDetail({});
-      // setTags([]); // setTags removed from resetForm
+    // Validation
+    // 各sourceTypeに応じたvalidationをここに集約
+    const validateSourceDetail = () => {
+      switch (sourceType) {
+        case 'self':
+          // 場所の入力は必須としない
+          break;
+        case 'person':
+          if (!sourceDetail.person) { alert('名前を入力してください。'); return false; }
+          // 関係の入力は必須としない
+          break;
+        case 'book':
+          if (!sourceDetail.title) { alert('書名を入力してください。'); return false; }
+          // 著者の入力は必須としない
+          break;
+        case 'youtube':
+          if (!sourceDetail.title) { alert('タイトルを入力してください。'); return false; }
+          if (!sourceDetail.url) { alert('URLを入力してください。'); return false; }
+          break;
+        case 'tv':
+          if (!sourceDetail.title) { alert('タイトルを入力してください。'); return false; }
+          break;
+        case 'web':
+          if (!sourceDetail.title) { alert('タイトルを入力してください。'); return false; }
+          if (!sourceDetail.url) { alert('URLを入力してください。'); return false; }
+          break;
+        case 'other':
+          if (!sourceDetail.note) { alert('詳細を入力してください。'); return false; }
+          break;
+        default:
+          break;
+      }
+      return true;
     };
 
+    if (!validateSourceDetail()) {
+      return;
+    }
+
     try {
-      const newIdea = {
-        id: crypto.randomUUID(),
-        text,
-        detailText,
-        problemCategory: problem,
-        valueCategory: value,
-        createdAt: selectedDate.toISOString(),
-        isFavorite: false,
-        isCultivated: false,
-        sourceType: sourceType,
-        sourceDetail: sourceDetail,
-        cultivation: {},
-        ...(photoDataUrl && { photo: photoDataUrl }),
-        pinned: false,
-        tags: [], // tags property always set to empty array
-      };
-      await db.ideas.add(newIdea);
+      const ideaData = buildIdeaObject();
+      if (draftId) {
+        // Overwrite existing draft before converting
+        await db.addDraft(ideaData);
+        await db.convertDraftToIdea(draftId);
+      } else {
+        await db.ideas.add(ideaData);
+      }
+      
       showToast("気づきを保存しました");
+
+      const resetForm = () => {
+        setDraftId(null);
+        setText("");
+        setDetailText("");
+        setProblem(null);
+        setValue(null);
+        setPhotoDataUrl(null);
+        setSelectedDate(new Date());
+        setSourceType('self');
+        setSourceDetail({});
+      };
 
       switch (settings.afterNewIdeaBehavior) {
         case 'detail':
-          router.push(`/idea/${newIdea.id}`);
+          router.push(`/idea/${ideaData.id}`);
           break;
         case 'home':
           router.push("/home");
@@ -151,17 +210,71 @@ export default function NewIdeaPage() {
           router.push("/home");
           break;
       }
-
     } catch (error) {
       console.error("Failed to save idea:", error);
-      alert("保存に失敗しました。");
+      showToast("保存に失敗しました。");
+    }
+  };
+
+  // 媒体選択に応じて入力欄をレンダリングする部分
+  const renderSourceDetailInputs = () => {
+    switch (sourceType) {
+      case 'self':
+        // 場所
+        return (
+          <Input placeholder="場所" value={sourceDetail.note || ''} onChange={e => handleSourceDetailChange('note', e.target.value)} />
+        );
+      case 'person':
+        // 名前、関係
+        return (
+          <>
+            <Input placeholder="名前" value={sourceDetail.person || ''} onChange={e => handleSourceDetailChange('person', e.target.value)} />
+            <Input placeholder="関係" value={sourceDetail.note || ''} onChange={e => handleSourceDetailChange('note', e.target.value)} />
+          </>
+        );
+      case 'book':
+        // 書名、著者
+        return (
+          <>
+            <Input placeholder="書名" value={sourceDetail.title || ''} onChange={e => handleSourceDetailChange('title', e.target.value)} />
+            <Input placeholder="著者" value={sourceDetail.author || ''} onChange={e => handleSourceDetailChange('author', e.target.value)} />
+          </>
+        );
+      case 'youtube':
+        // タイトル、URL
+        return (
+          <>
+            <Input placeholder="タイトル" value={sourceDetail.title || ''} onChange={e => handleSourceDetailChange('title', e.target.value)} />
+            <Input placeholder="URL" value={sourceDetail.url || ''} onChange={e => handleSourceDetailChange('url', e.target.value)} />
+          </>
+        );
+      case 'tv':
+        // タイトル
+        return (
+          <Input placeholder="タイトル" value={sourceDetail.title || ''} onChange={e => handleSourceDetailChange('title', e.target.value)} />
+        );
+      case 'web':
+        // タイトル、URL
+        return (
+          <>
+            <Input placeholder="タイトル" value={sourceDetail.title || ''} onChange={e => handleSourceDetailChange('title', e.target.value)} />
+            <Input placeholder="URL" value={sourceDetail.url || ''} onChange={e => handleSourceDetailChange('url', e.target.value)} />
+          </>
+        );
+      case 'other':
+        // 詳細
+        return (
+          <Input placeholder="詳細" value={sourceDetail.note || ''} onChange={e => handleSourceDetailChange('note', e.target.value)} />
+        );
+      default:
+        return null;
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold">見つけた気づき</h1>
+        <h1 className="text-2xl font-bold">{draftId ? "下書きを編集中" : "見つけた気づき"}</h1>
         <Input
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -169,7 +282,6 @@ export default function NewIdeaPage() {
           className="mt-4 text-lg"
           required
         />
-        
         <div className="space-y-2 mt-4">
           <label htmlFor="detailText" className="text-sm font-medium">詳細 (任意)</label>
           <Textarea
@@ -199,19 +311,16 @@ export default function NewIdeaPage() {
             </Button>
           </div>
         ) : (
-          <div>
-            <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
+          <div className="flex items-center gap-2">
+            <Button type="button" variant="outline" onClick={() => cameraInputRef.current?.click()}>
               <CameraIcon className="mr-2 h-4 w-4" />
-              写真を追加
+              写真を撮る
             </Button>
-            <input
-              type="file"
-              accept="image/*"
-              capture="environment"
-              ref={fileInputRef}
-              onChange={handlePhotoChange}
-              className="hidden"
-            />
+            <Button type="button" variant="outline" onClick={() => libraryInputRef.current?.click()}>
+              画像を追加
+            </Button>
+            <input type="file" accept="image/*" capture="environment" ref={cameraInputRef} onChange={handlePhotoChange} className="hidden" />
+            <input type="file" accept="image/*" ref={libraryInputRef} onChange={handlePhotoChange} className="hidden" />
           </div>
         )}
       </div>
@@ -223,10 +332,7 @@ export default function NewIdeaPage() {
             <Badge
               key={key}
               variant={sourceType === key ? "default" : "outline"}
-              onClick={() => {
-                setSourceType(key as SourceType);
-                setSourceDetail({});
-              }}
+              onClick={() => { setSourceType(key as SourceType); setSourceDetail({}); }}
               className="cursor-pointer"
             >
               {label}
@@ -234,27 +340,7 @@ export default function NewIdeaPage() {
           ))}
         </div>
         <div className="space-y-2 mt-2">
-          {sourceType === 'book' && (
-            <>
-              <Input placeholder="書名（必須）" value={sourceDetail.title || ''} onChange={e => handleSourceDetailChange('title', e.target.value)} />
-              <Input placeholder="著者" value={sourceDetail.author || ''} onChange={e => handleSourceDetailChange('author', e.target.value)} />
-            </>
-          )}
-          {sourceType === 'youtube' && (
-            <>
-              <Input placeholder="URL（必須）" value={sourceDetail.url || ''} onChange={e => handleSourceDetailChange('url', e.target.value)} />
-              <Input placeholder="タイトル" value={sourceDetail.title || ''} onChange={e => handleSourceDetailChange('title', e.target.value)} />
-            </>
-          )}
-          {sourceType === 'person' && (
-            <>
-              <Input placeholder="名前（必須）" value={sourceDetail.person || ''} onChange={e => handleSourceDetailChange('person', e.target.value)} />
-              <Input placeholder="肩書き・関係など" value={sourceDetail.note || ''} onChange={e => handleSourceDetailChange('note', e.target.value)} />
-            </>
-          )}
-          {sourceType === 'other' && (
-            <Input placeholder="詳細（必須）" value={sourceDetail.note || ''} onChange={e => handleSourceDetailChange('note', e.target.value)} />
-          )}
+          {renderSourceDetailInputs()}
         </div>
       </div>
 

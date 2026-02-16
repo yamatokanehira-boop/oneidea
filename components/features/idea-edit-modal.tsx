@@ -1,17 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { type Idea, type SourceType, type SourceDetail } from "@/lib/types";
-import { ProblemCategories, ValueCategories, SourceTypes, ApplyContextTypes, type ProblemCategory, type ValueCategory } from "@/consts";
+import { type Idea, type SourceDetail } from "@/lib/types"; // SourceTypeを削除
+import { ProblemCategories, ValueCategories, SourceTypes, type ProblemCategory, type ValueCategory, SourceType } from "@/consts"; // constsからSourceTypeをインポート
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { XCircle, Save } from "lucide-react"; // アイコンを追加
-import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "@/lib/db";
-import { TagInput } from "@/components/features/tag-input";
 
 interface IdeaEditModalProps {
   isOpen: boolean;
@@ -27,9 +25,7 @@ export function IdeaEditModal({ isOpen, onClose, idea, onSave }: IdeaEditModalPr
   const [editedValueCategory, setEditedValueCategory] = useState<ValueCategory | null>(idea.valueCategory);
   const [editedSourceType, setEditedSourceType] = useState<SourceType>(idea.sourceType);
   const [editedSourceDetail, setEditedSourceDetail] = useState<SourceDetail | null>(idea.sourceDetail || null);
-  const [editedTags, setEditedTags] = useState<string[]>([]); // タグのState
-
-
+  // タグ関連のStateは削除
 
 
   // モーダルが開くたびにstateを初期化
@@ -41,7 +37,7 @@ export function IdeaEditModal({ isOpen, onClose, idea, onSave }: IdeaEditModalPr
       setEditedValueCategory(idea.valueCategory);
       setEditedSourceType(idea.sourceType);
       setEditedSourceDetail(idea.sourceDetail || {});
-      setEditedTags(idea.tags || []);
+      // setEditedTags(idea.tags || []); // タグ関連の初期化も削除
     }
   }, [isOpen, idea]);
 
@@ -59,12 +55,68 @@ export function IdeaEditModal({ isOpen, onClose, idea, onSave }: IdeaEditModalPr
       valueCategory: editedValueCategory,
       sourceType: editedSourceType,
       sourceDetail: editedSourceDetail,
-      tags: editedTags,
+      // tags: editedTags, // タグ関連の保存も削除
 
     };
     await onSave(updatedIdea);
     onClose();
   };
+  
+  // 媒体選択に応じて入力欄をレンダリングする部分
+  const renderSourceDetailInputs = () => {
+    switch (editedSourceType) {
+      case 'self':
+        // 場所
+        return (
+          <Input placeholder="場所" value={editedSourceDetail?.note || ''} onChange={e => handleSourceDetailChange('note', e.target.value)} />
+        );
+      case 'person':
+        // 名前、関係
+        return (
+          <>
+            <Input placeholder="名前" value={editedSourceDetail?.person || ''} onChange={e => handleSourceDetailChange('person', e.target.value)} />
+            <Input placeholder="関係" value={editedSourceDetail?.note || ''} onChange={e => handleSourceDetailChange('note', e.target.value)} />
+          </>
+        );
+      case 'book':
+        // 書名、著者
+        return (
+          <>
+            <Input placeholder="書名" value={editedSourceDetail?.title || ''} onChange={e => handleSourceDetailChange('title', e.target.value)} />
+            <Input placeholder="著者" value={editedSourceDetail?.author || ''} onChange={e => handleSourceDetailChange('author', e.target.value)} />
+          </>
+        );
+      case 'youtube':
+        // タイトル、URL
+        return (
+          <>
+            <Input placeholder="タイトル" value={editedSourceDetail?.title || ''} onChange={e => handleSourceDetailChange('title', e.target.value)} />
+            <Input placeholder="URL" value={editedSourceDetail?.url || ''} onChange={e => handleSourceDetailChange('url', e.target.value)} />
+          </>
+        );
+      case 'tv':
+        // タイトル
+        return (
+          <Input placeholder="タイトル" value={editedSourceDetail?.title || ''} onChange={e => handleSourceDetailChange('title', e.target.value)} />
+        );
+      case 'web':
+        // タイトル、URL
+        return (
+          <>
+            <Input placeholder="タイトル" value={editedSourceDetail?.title || ''} onChange={e => handleSourceDetailChange('title', e.target.value)} />
+            <Input placeholder="URL" value={editedSourceDetail?.url || ''} onChange={e => handleSourceDetailChange('url', e.target.value)} />
+          </>
+        );
+      case 'other':
+        // 詳細
+        return (
+          <Input placeholder="詳細" value={editedSourceDetail?.note || ''} onChange={e => handleSourceDetailChange('note', e.target.value)} />
+        );
+      default:
+        return null;
+    }
+  };
+
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
@@ -115,34 +167,16 @@ export function IdeaEditModal({ isOpen, onClose, idea, onSave }: IdeaEditModalPr
               ))}
             </div>
             <div className="space-y-2 mt-2">
-              {editedSourceType === 'book' && (
-                <>
-                  <Input placeholder="書名（必須）" value={editedSourceDetail?.title || ''} onChange={e => handleSourceDetailChange('title', e.target.value)} />
-                  <Input placeholder="著者" value={editedSourceDetail?.author || ''} onChange={e => handleSourceDetailChange('author', e.target.value)} />
-                </>
-              )}
-              {editedSourceType === 'youtube' && (
-                <>
-                  <Input placeholder="URL（必須）" value={editedSourceDetail?.url || ''} onChange={e => handleSourceDetailChange('url', e.target.value)} />
-                  <Input placeholder="タイトル" value={editedSourceDetail?.title || ''} onChange={e => handleSourceDetailChange('title', e.target.value)} />
-                </>
-              )}
-              {editedSourceType === 'person' && (
-                <>
-                  <Input placeholder="名前（必須）" value={editedSourceDetail?.person || ''} onChange={e => handleSourceDetailChange('person', e.target.value)} />
-                  <Input placeholder="肩書き・関係など" value={editedSourceDetail?.note || ''} onChange={e => handleSourceDetailChange('note', e.target.value)} />
-                </>
-              )}
-              {editedSourceType === 'other' && (
-                <Input placeholder="詳細（必須）" value={editedSourceDetail?.note || ''} onChange={e => handleSourceDetailChange('note', e.target.value)} />
-              )}
+              {renderSourceDetailInputs()}
             </div>
           </div>
 
+          {/* タグ関連のUIを削除
           <div className="space-y-4">
             <h2 className="font-semibold">タグ (任意)</h2>
             <TagInput initialTags={editedTags} onTagsChange={setEditedTags} />
           </div>
+          */}
 
           <div className="space-y-4">
             <h2 className="font-semibold">課題 (Problem)</h2>

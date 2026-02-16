@@ -57,6 +57,7 @@ export const compressImage = (base64Str: string): Promise<string> => {
 };
 
 import { Idea } from '@/lib/types'; // Idea型をインポート
+import { ApplyContextType } from '@/consts';
 
 export const hasAnyCultivationInput = (idea: Idea): boolean => {
   if (!idea.cultivation) {
@@ -79,48 +80,58 @@ export const hasAnyCultivationInput = (idea: Idea): boolean => {
 
 export const getCultivationProgress = (idea: Idea): { percentage: number; totalFields: number } => {
   if (!idea.cultivation) {
-    return { percentage: 0, totalFields: 0 };
+    return { percentage: 0, totalFields: 100 }; // totalFields は常に100%を表す
   }
 
   const cultivation = idea.cultivation;
-  let filledFields = 0;
-  let totalFields = 0;
+  let currentProgress = 0;
 
-  // Memo
-  totalFields++;
-  if (!!cultivation.memo) filledFields++;
+  // ヘルパー関数
+  const isFilled = (s?: string | null) => (s ?? "").trim().length > 0;
+  const isAnyTypeSelected = (types?: ApplyContextType[] | null) => (types?.length ?? 0) > 0;
 
-  // Next Action
-  totalFields++;
-  if (!!cultivation.nextAction) filledFields++;
+  // 1) 記入欄: deepProblemDetail (15%)
+  if (isFilled(idea.deepProblemDetail)) {
+    currentProgress += 15;
+  }
 
-  // Hypothesis
-  totalFields++;
-  if (!!cultivation.hypothesis) filledFields++;
+  // 2) 記入欄: deepSolution (15%)
+  if (isFilled(idea.deepSolution)) {
+    currentProgress += 15;
+  }
 
-  // Use Case
-  totalFields++;
-  if (!!cultivation.useCase) filledFields++;
+  // 3) 記入欄: deepValueDetail (15%)
+  if (isFilled(idea.deepValueDetail)) {
+    currentProgress += 15;
+  }
 
-  // Apply Scene 1
-  totalFields++;
-  if (cultivation.applyScene1Type && cultivation.applyScene1Type.length > 0) filledFields++;
-  totalFields++;
-  if (!!cultivation.applyScene1Note) filledFields++;
+  // 4) 記入欄: applyScene1Note (15%) + ボタン: applyScene1Type (3%)
+  if (isFilled(cultivation.applyScene1Note)) {
+    currentProgress += 15;
+  }
+  if (isAnyTypeSelected(cultivation.applyScene1Type)) {
+    currentProgress += 3;
+  }
 
-  // Apply Scene 2
-  totalFields++;
-  if (cultivation.applyScene2Type && cultivation.applyScene2Type.length > 0) filledFields++;
-  totalFields++;
-  if (!!cultivation.applyScene2Note) filledFields++;
+  // 5) 記入欄: applyScene2Note (15%) + ボタン: applyScene2Type (3%)
+  if (isFilled(cultivation.applyScene2Note)) {
+    currentProgress += 15;
+  }
+  if (isAnyTypeSelected(cultivation.applyScene2Type)) {
+    currentProgress += 3;
+  }
 
-  // Apply Scene 3
-  totalFields++;
-  if (cultivation.applyScene3Type && cultivation.applyScene3Type.length > 0) filledFields++;
-  totalFields++;
-  if (!!cultivation.applyScene3Note) filledFields++;
+  // 6) 記入欄: applyScene3Note (16%) + ボタン: applyScene3Type (3%)
+  // ユーザーの指示により、applyScene3Noteが16%
+  if (isFilled(cultivation.applyScene3Note)) {
+    currentProgress += 16;
+  }
+  if (isAnyTypeSelected(cultivation.applyScene3Type)) {
+    currentProgress += 3;
+  }
+  
+  // Progress cannot exceed 100%
+  const percentage = Math.min(currentProgress, 100);
 
-  const percentage = totalFields === 0 ? 0 : Math.round((filledFields / totalFields) * 100);
-
-  return { percentage, totalFields };
+  return { percentage, totalFields: 100 };
 };

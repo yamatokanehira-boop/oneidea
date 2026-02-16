@@ -63,7 +63,7 @@ export default function SettingsPage() {
     }
 
     try {
-      await db.resetAll();
+      await db.clearAllData();
       showToast("リセットしました");
       router.push("/home"); // Homeへ遷移
     } catch (error) {
@@ -176,17 +176,26 @@ export default function SettingsPage() {
 
     htmlContent += `</body></html>`;
 
-    // 新しいウィンドウでHTMLを開き、印刷ダイアログを表示
-    const printWindow = window.open('', '', 'height=600,width=800');
-    if (printWindow) {
-      printWindow.document.write(htmlContent);
-      printWindow.document.close();
-      printWindow.focus();
-      printWindow.print();
-      // setTimeout(() => printWindow.close(), 1000); // 印刷ダイアログが表示されたら閉じる
-      showToast("PDFの生成準備ができました。印刷ダイアログから保存してください。");
-    } else {
-      alert("ポップアップがブロックされました。PDF生成のためには許可してください。");
+    try {
+      // 新しいウィンドウでHTMLを開き、印刷ダイアログを表示
+      const printWindow = window.open('', '', 'height=600,width=800');
+      if (printWindow) {
+        // ロードイベントリスナーを設定
+        printWindow.onload = () => {
+          printWindow.focus();
+          printWindow.print();
+          // showToast("PDFの生成準備ができました。印刷ダイアログから保存してください。"); // toastは一度のみでよい
+          // setTimeout(() => printWindow.close(), 1000); // 印刷ダイアログが表示されたら閉じる
+        };
+        printWindow.document.write(htmlContent);
+        printWindow.document.close();
+        showToast("PDFの生成準備ができました。印刷ダイアログから保存してください。");
+      } else {
+        alert("ポップアップがブロックされました。PDF生成のためには許可してください。");
+      }
+    } catch (error) {
+      console.error("PDF generation failed:", error);
+      showToast("PDFの生成中にエラーが発生しました。ブラウザのポップアップ設定を確認してください。");
     }
   };
 

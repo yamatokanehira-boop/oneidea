@@ -30,6 +30,7 @@ interface IdeaCardProps {
   idea: Idea;
   onDelete?: (id: string) => void;
   highlightTerms?: string[];
+  fromPage?: 'home' | 'drawer'; // fromPageプロパティを追加
 }
 
 const SourceIcon = ({ type }: { type: Idea["sourceType"] }) => {
@@ -49,7 +50,7 @@ const SourceIcon = ({ type }: { type: Idea["sourceType"] }) => {
   }
 };
 
-export function IdeaCard({ idea, onDelete, highlightTerms }: IdeaCardProps) {
+export function IdeaCard({ idea, onDelete, highlightTerms, fromPage }: IdeaCardProps) {
   const { showToast } = useAppStore();
   const { settings } = useSettings();
   const router = useRouter();
@@ -111,7 +112,8 @@ export function IdeaCard({ idea, onDelete, highlightTerms }: IdeaCardProps) {
   const handleCultivateClick = (e: MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    router.push(`/idea/${idea.id}`);
+    const href = `/idea/${idea.id}${fromPage ? `?from=${fromPage}` : ''}`;
+    router.push(href);
   };
 
   const { percentage } = getCultivationProgress(idea);
@@ -153,7 +155,7 @@ export function IdeaCard({ idea, onDelete, highlightTerms }: IdeaCardProps) {
   return (
     <>
       <Link
-        href={`/idea/${idea.id}`}
+        href={`/idea/${idea.id}${fromPage ? `?from=${fromPage}` : ''}`}
         className="block rounded-lg border bg-card text-card-foreground shadow-sm transition-shadow hover:shadow-md"
       >
         <div className={cn("flex flex-col h-full", densityClasses.padding[cardDensity])}>
@@ -195,6 +197,7 @@ export function IdeaCard({ idea, onDelete, highlightTerms }: IdeaCardProps) {
             />
           )}
 
+          {/* idea.tagsの表示ブロックを削除
           {idea.tags && idea.tags.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-2">
               {idea.tags.slice(0, 3).map((tag) => (
@@ -212,6 +215,7 @@ export function IdeaCard({ idea, onDelete, highlightTerms }: IdeaCardProps) {
               )}
             </div>
           )}
+          */}
 
           <div className={cn(densityClasses.progressMargin[cardDensity])}>
             <div className="h-1 bg-zinc-200 dark:bg-zinc-700 rounded-full">

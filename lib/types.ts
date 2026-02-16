@@ -1,10 +1,12 @@
 import type { 
   ProblemCategory, 
   ValueCategory, 
-  ApplyContextType 
+  ApplyContextType,
+  SourceType // constsからインポート
 } from '@/consts';
 
-export type SourceType = "self" | "book" | "youtube" | "person" | "other";
+// lib/types.ts からのSourceType定義を削除
+// export type SourceType = "self" | "book" | "youtube" | "person" | "other";
 
 export type SourceDetail = {
   title?: string;
@@ -37,7 +39,7 @@ export interface Idea {
   
   isFavorite: boolean;
   isCultivated: boolean;
-  sourceType: SourceType;
+  sourceType: SourceType; // constsからインポートしたSourceTypeを使用
   sourceDetail: SourceDetail | null;
   cultivation?: Cultivation;
 
@@ -48,7 +50,8 @@ export interface Idea {
   deepValueDetail?: string;
   detailText?: string;
   pinned: boolean;
-  tags: string[];
+  // tags: string[]; // tagsを削除
+  updatedAt?: number; // Keep for drafts compatibility
 }
 
 export type IdeaStatus = 'FLASH' | 'FOSTERED' | 'BEST';
@@ -75,9 +78,5 @@ export interface AppSettings {
 export type CardDensity = 'compact' | 'standard' | 'spacious';
 export type FontMode = 'rounded' | 'gothic' | 'mincho';
 
-export interface Draft {
-  id: string;
-  text: string;
-  createdAt: number;
-  updatedAt: number;
-}
+// Draft type is now an alias for Idea, as drafts will store the full idea object.
+export type Draft = Idea;
