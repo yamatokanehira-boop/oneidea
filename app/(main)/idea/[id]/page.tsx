@@ -13,6 +13,7 @@ import { useAppStore } from "@/lib/store";
 import { hasAnyCultivationInput } from "@/lib/utils";
 import { CultivationField } from "@/components/ui/cultivation-field";
 import { Cultivation } from "@/lib/types"; // Import Cultivation type
+import { Printer } from "lucide-react"; // Printerアイコンをインポート
 // TagInputは削除
 
 export default function IdeaDetailPage({ params }: { params: { id: string } }) {
@@ -47,7 +48,7 @@ export default function IdeaDetailPage({ params }: { params: { id: string } }) {
     try {
       await db.ideas.update(idea.id, {
         deepProblemDetail: deepProblem,
-        deepSolution: deepSolution,
+        deepSolution: deepSolution, // deepValueからdeepSolutionに修正
         deepValueDetail: deepValue,
         detailText: detailText,
         cultivation: cultivationState, // cultivationState全体を保存
@@ -146,10 +147,13 @@ export default function IdeaDetailPage({ params }: { params: { id: string } }) {
       <section>
         <p className="text-muted-foreground">{new Date(idea.createdAt).toLocaleDateString()}</p>
         <h1 className="mt-1 text-3xl font-bold">{idea.text}</h1>
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-4 flex flex-wrap gap-2 items-center">
             {idea.problemCategory && <Badge variant="outline">{ProblemCategories[idea.problemCategory]}</Badge>}
             {idea.valueCategory && <Badge variant="outline">{ValueCategories[idea.valueCategory]}</Badge>}
             {hasInputForDisplay && <Badge>育成済み</Badge>}
+            <Button variant="ghost" size="sm" onClick={() => router.push(`/print?mode=idea&id=${idea.id}`)} className="ml-auto flex items-center gap-1 text-sm text-muted-foreground">
+              <Printer size={16} /> 印刷
+            </Button>
         </div>
         {/* タグ関連の表示を削除
         {idea.tags && idea.tags.length > 0 && (

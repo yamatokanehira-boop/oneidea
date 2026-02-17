@@ -6,15 +6,16 @@ import { Badge } from "@/components/ui/badge";
 import { SourceTypes, ProblemCategories, ValueCategories } from "@/consts";
 import { Input } from "@/components/ui/input";
 import { useState, useMemo } from "react";
-import { type Idea } from "@/lib/types";
+import { type Idea, type SortOrder } from "@/lib/types"; // SortOrderをインポート
 import { type SourceType, type ApplyContextType } from "@/consts";
 
 import { IdeaCard } from "@/components/features/idea-card";
-import { getCultivationProgress } from "@/lib/utils";
+import { getCultivationProgress, applyIdeaSorting, getAppliedCategories } from "@/lib/utils"; // applyIdeaSortingをインポート
 import { Button } from "@/components/ui/button";
-import { XCircle } from "lucide-react"; // XCircleを再インポート
+import { XCircle } from "lucide-react";
 
 import { useAppStore } from "@/lib/store";
+import { SortOrderSelector } from "@/components/ui/sort-order-selector"; // SortOrderSelectorをインポート
 import { useSettings } from "@/components/providers/settings-provider";
 
 const getSearchableString = (idea: Idea): string => {
@@ -39,14 +40,11 @@ const getSearchableString = (idea: Idea): string => {
   return parts.filter(Boolean).join(" ").toLowerCase();
 };
 
-type SortOrder = 'newest' | 'oldest' | 'progress_high' | 'progress_low';
-
 export default function DrawerPage() {
-  const { settings } = useAppStore();
+  const { settings, sortOrder, setSortOrder } = useAppStore();
   const [keyword, setKeyword] = useState("");
   const [activeTab, setActiveTab] = useState<'all' | 'media' | 'cultivated' | 'favorite'>('all');
   const [mediaSourceFilter, setMediaSourceFilter] = useState<SourceType | 'all'>('all');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
   const [grownSubFilter, setGrownSubFilter] = useState<'all' | ApplyContextType>('all');
 
   const ideas = useLiveQuery(() => db.ideas.orderBy("createdAt").reverse().toArray(), []);
@@ -78,16 +76,12 @@ export default function DrawerPage() {
         tempIdeas = tempIdeas.filter((idea: Idea) => idea.isFavorite);
         break;
       case 'cultivated':
-        tempIdeas = tempIdeas.filter((idea: Idea) => idea.isCultivated);
+        tempIdeas = tempIdeas.filter((idea: Idea) => getCultivationProgress(idea).percentage === 100);
         if (grownSubFilter !== 'all') {
-            tempIdeas = tempIdeas.filter(idea => {
-                const targetType = grownSubFilter; // 'WORK', 'LIFE', 'HOBBY'
-                return (
-                    (idea.cultivation?.applyScene1Type && idea.cultivation.applyScene1Type.includes(targetType)) ||
-                    (idea.cultivation?.applyScene2Type && idea.cultivation.applyScene2Type.includes(targetType)) ||
-                    (idea.cultivation?.applyScene3Type && idea.cultivation.applyScene3Type.includes(targetType))
-                );
-            });
+          tempIdeas = tempIdeas.filter(idea => {
+            const appliedCategories = getAppliedCategories(idea);
+            return appliedCategories.has(grownSubFilter);
+          });
         }
         break;
       case 'media':
@@ -98,27 +92,8 @@ export default function DrawerPage() {
     }
 
     // Apply sorting
-    const sortedIdeas = [...tempIdeas].sort((a, b) => {
-      // Pinned items always come first (既存のソートロジックを維持しつつ、ソート順の前に適用)
-      if (a.pinned && !b.pinned) return -1;
-      if (!a.pinned && b.pinned) return 1;
-
-      // 以下、選択された並び替え順序
-      switch (sortOrder) {
-        case 'oldest':
-          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-        case 'progress_high':
-          return getCultivationProgress(b).percentage - getCultivationProgress(a).percentage;
-        case 'progress_low':
-          return getCultivationProgress(a).percentage - getCultivationProgress(b).percentage;
-        case 'newest': // デフォルトまたは明示的な'newest'
-        default:
-          return new Date(b.createdAt).getTime() - new Date(b.createdAt).getTime();
-      }
-    });
-    
-    return sortedIdeas;
-  }, [ideas, searchWords, activeTab, mediaSourceFilter, sortOrder, settings]);
+    return applyIdeaSorting(tempIdeas, sortOrder);
+  }, [ideas, searchWords, activeTab, mediaSourceFilter, grownSubFilter, sortOrder, settings]);
 
   const handleClearFilters = () => {
     setKeyword("");
@@ -152,36 +127,8 @@ export default function DrawerPage() {
           )}
         </div>
 
-        {/* 並び替えブロック */}
-        <div className="space-y-2 border-t border-border mt-4 pt-4">
-          <p className="text-sm font-medium text-gray-700">並び替え</p>
-          <div className="grid grid-cols-4 bg-gray-100 rounded-lg p-1 gap-1 border border-gray-200">
-            <Button
-              className={`rounded-md text-sm transition-colors duration-200 h-8 ${sortOrder === 'newest' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
-              onClick={() => setSortOrder('newest')}
-            >
-              新しい順
-            </Button>
-            <Button
-              className={`rounded-md text-sm transition-colors duration-200 h-8 ${sortOrder === 'oldest' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
-              onClick={() => setSortOrder('oldest')}
-            >
-              古い順
-            </Button>
-            <Button
-              className={`rounded-md text-sm transition-colors duration-200 h-8 ${sortOrder === 'progress_high' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
-              onClick={() => setSortOrder('progress_high')}
-            >
-              育成％高
-            </Button>
-            <Button
-              className={`rounded-md text-sm transition-colors duration-200 h-8 ${sortOrder === 'progress_low' ? 'bg-black shadow-sm text-white border border-black' : 'bg-white text-black hover:bg-gray-100 border border-gray-200'}`}
-              onClick={() => setSortOrder('progress_low')}
-            >
-              育成％低
-            </Button>
-          </div>
-        </div>
+        {/* 並び替えブロックをSortOrderSelectorに置き換え */}
+        <SortOrderSelector sortOrder={sortOrder} setSortOrder={setSortOrder} />
 
         {/* フィルタブロック */}
         <div className="space-y-2 border-t border-border mt-4 pt-4">

@@ -81,3 +81,5 @@ export type FontMode = 'rounded' | 'gothic' | 'mincho';
 
 // Draft type is now an alias for Idea, as drafts will store the full idea object.
 export type Draft = Idea;
+
+export type SortOrder = 'newest' | 'oldest' | 'progress_high' | 'progress_low';

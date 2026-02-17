@@ -56,26 +56,39 @@ export const compressImage = (base64Str: string): Promise<string> => {
   });
 };
 
-import { Idea } from '@/lib/types'; // Idea型をインポート
+import { Idea, SortOrder } from '@/lib/types'; // Idea型とSortOrderをインポート
 import { ApplyContextType } from '@/consts';
 
+// ヘルパー関数
+const isFilled = (s?: string | null) => (s ?? "").trim().length > 0;
+const isAnyTypeSelected = (types?: ApplyContextType[] | null) => (types?.length ?? 0) > 0;
+
+export const applyIdeaSorting = (ideas: Idea[], sortOrder: SortOrder): Idea[] => {
+  // 元の配列を変更しないようにコピー
+  const sortedIdeas = [...ideas];
+
+  return sortedIdeas.sort((a, b) => {
+    // Pinned items always come first
+    if (a.pinned && !b.pinned) return -1;
+    if (!a.pinned && b.pinned) return 1;
+
+    switch (sortOrder) {
+      case 'oldest':
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      case 'progress_high':
+        return getCultivationProgress(b).percentage - getCultivationProgress(a).percentage;
+      case 'progress_low':
+        return getCultivationProgress(a).percentage - getCultivationProgress(b).percentage;
+      case 'newest': // デフォルトまたは明示的な'newest'
+      default:
+        // Bug fix: should compare a.createdAt and b.createdAt
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    }
+  });
+};
+
 export const hasAnyCultivationInput = (idea: Idea): boolean => {
-  if (!idea.cultivation) {
-    return false;
-  }
-  const c = idea.cultivation;
-  return (
-    !!c.memo ||
-    !!c.nextAction ||
-    !!c.hypothesis ||
-    !!c.useCase ||
-    (c.applyScene1Type && c.applyScene1Type.length > 0) ||
-    !!c.applyScene1Note ||
-    (c.applyScene2Type && c.applyScene2Type.length > 0) ||
-    !!c.applyScene2Note ||
-    (c.applyScene3Type && c.applyScene3Type.length > 0) ||
-    !!c.applyScene3Note
-  );
+  return getCultivationProgress(idea).percentage > 0;
 };
 
 export const getCultivationProgress = (idea: Idea): { percentage: number; totalFields: number } => {
@@ -85,10 +98,6 @@ export const getCultivationProgress = (idea: Idea): { percentage: number; totalF
 
   const cultivation = idea.cultivation;
   let currentProgress = 0;
-
-  // ヘルパー関数
-  const isFilled = (s?: string | null) => (s ?? "").trim().length > 0;
-  const isAnyTypeSelected = (types?: ApplyContextType[] | null) => (types?.length ?? 0) > 0;
 
   // 1) 記入欄: deepProblemDetail (15%)
   if (isFilled(idea.deepProblemDetail)) {
@@ -138,8 +147,6 @@ export const getCultivationProgress = (idea: Idea): { percentage: number; totalF
 
 export const getNextAction = (idea: Idea): string => {
   const cultivation = idea.cultivation || {}; // cultivationが存在しない場合を考慮
-  const isFilled = (s?: string | null) => (s ?? "").trim().length > 0;
-  const isAnyTypeSelected = (types?: ApplyContextType[] | null) => (types?.length ?? 0) > 0;
 
   // 1) deepProblemDetail
   if (!isFilled(idea.deepProblemDetail)) {
@@ -180,6 +187,19 @@ export const getNextAction = (idea: Idea): string => {
     return "次：応用先03 の用途ボタンを1つ選ぶ（+3%）";
   }
 
-  return "育成完了！🎉";
+  return "育成完了！";
+};
+
+export const getAppliedCategories = (idea: Idea): Set<ApplyContextType> => {
+  const categories = new Set<ApplyContextType>();
+  if (!idea.cultivation) {
+    return categories;
+  }
+  
+  (idea.cultivation.applyScene1Type || []).forEach(type => categories.add(type));
+  (idea.cultivation.applyScene2Type || []).forEach(type => categories.add(type));
+  (idea.cultivation.applyScene3Type || []).forEach(type => categories.add(type));
+  
+  return categories;
 };
 

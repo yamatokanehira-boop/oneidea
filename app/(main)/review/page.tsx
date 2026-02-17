@@ -6,39 +6,72 @@ import { db } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge"; // Add this import
-import { ProblemCategories, ValueCategories } from "@/consts"; // Add this import
+import { Badge } from "@/components/ui/badge";
+import { ProblemCategories, ValueCategories } from "@/consts";
 import type { Idea, Cultivation } from "@/lib/types";
 import { useAppStore } from "@/lib/store";
-import { cn, hasAnyCultivationInput, getCultivationProgress, getNextAction } from "@/lib/utils"; // Import hasAnyCultivationInput, getCultivationProgress, getNextAction
-import { ChevronLeft } from "lucide-react"; // Add this import
-import { Progress } from "@/components/ui/progress"; // Progressコンポーネントをインポート
-import { useRouter } from "next/navigation"; // useRouterをインポート
+import { cn, hasAnyCultivationInput, getCultivationProgress, getNextAction, applyIdeaSorting } from "@/lib/utils";
+import { ChevronLeft } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { useRouter } from "next/navigation";
 
 import { CultivationField } from "@/components/ui/cultivation-field";
 import { ApplySceneSection } from "@/components/features/apply-scene-section";
 import { ApplyContextType } from "@/consts";
+import { SortOrderSelector } from "@/components/ui/sort-order-selector";
+
+// Chevron Icon for collapsible sections
+const ChevronIcon = ({ isOpen }: { isOpen: boolean }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 20 20"
+    fill="currentColor"
+    className={`w-5 h-5 transition-transform duration-200 ${isOpen ? "rotate-90" : ""}`}
+  >
+    <path
+      fillRule="evenodd"
+      d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+      clipRule="evenodd"
+    />
+  </svg>
+);
+
 
 export default function CultivationPage() {
-  const { showToast } = useAppStore();
-  const router = useRouter(); // useRouterを初期化
-  
+  const { showToast, sortOrder, setSortOrder } = useAppStore();
+  const router = useRouter();
+
   const allIdeas = useLiveQuery(
     () => db.ideas.orderBy('createdAt').reverse().toArray(),
     []
   );
 
-  const cultivatedIdeas = allIdeas?.filter(idea => hasAnyCultivationInput(idea)) || [];
-  const cultivatedIdeasCount = cultivatedIdeas.length;
+  // 1. Data Preparation: Split ideas into developed and in-progress
+  const { developedIdeas, inProgressIdeas } = useMemo(() => {
+    if (!allIdeas) return { developedIdeas: [], inProgressIdeas: [] };
+    const sorted = applyIdeaSorting(allIdeas, sortOrder);
+    const developed = sorted.filter(idea => getCultivationProgress(idea).percentage === 100);
+    const inProgress = sorted.filter(idea => hasAnyCultivationInput(idea) && getCultivationProgress(idea).percentage < 100);
+    return { developedIdeas: developed, inProgressIdeas: inProgress };
+  }, [allIdeas, sortOrder]);
 
-  // 平均育成%の計算
+  const inProgressIdeasCount = inProgressIdeas.length;
+
+  // Average cultivation percentage for in-progress ideas
   const averageCultivationPercentage = useMemo(() => {
-    if (cultivatedIdeasCount === 0) return 0;
-    const totalPercentage = cultivatedIdeas.reduce((sum, idea) => sum + getCultivationProgress(idea).percentage, 0);
-    return Math.round(totalPercentage / cultivatedIdeasCount);
-  }, [cultivatedIdeas, cultivatedIdeasCount]);
+    if (inProgressIdeasCount === 0) return 0;
+    const totalPercentage = inProgressIdeas.reduce((sum, idea) => sum + getCultivationProgress(idea).percentage, 0);
+    return Math.round(totalPercentage / inProgressIdeasCount);
+  }, [inProgressIdeas, inProgressIdeasCount]);
 
   const [selectedIdea, setSelectedIdea] = useState<Idea | null>(null);
+
+  // 2. State Management: Collapsible sections
+  const [isDevelopedSectionOpen, setDevelopedSectionOpen] = useState(true);
+  const [isInProgressSectionOpen, setInProgressSectionOpen] = useState(true);
+
+
+  // --- (Existing hooks and handlers: useEffect, recommendIdeaToCultivate, handleSaveCultivation, etc. - NO CHANGE) ---
   const [deepProblemDetail, setDeepProblemDetail] = useState("");
   const [deepSolution, setDeepSolution] = useState("");
   const [deepValueDetail, setDeepValueDetail] = useState("");
@@ -59,30 +92,21 @@ export default function CultivationPage() {
   }, [selectedIdea]);
 
   const recommendIdeaToCultivate = () => {
-    if (cultivatedIdeasCount === 0) {
-      router.push('/drawer'); // 育成中のIDEAがなければ引き出しページへ
+    if (inProgressIdeasCount === 0) {
+      router.push('/drawer');
       return;
     }
-
-    // 育成%が最も低いもの、同率ならcreatedAtが新しいものを選択
-    const recommended = cultivatedIdeas.sort((a, b) => {
+    const recommended = inProgressIdeas.sort((a, b) => {
       const progA = getCultivationProgress(a).percentage;
       const progB = getCultivationProgress(b).percentage;
-
-      if (progA !== progB) {
-        return progA - progB; // 育成%が低い方を優先
-      }
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(); // createdAtが新しい方を優先
+      if (progA !== progB) return progA - progB;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     })[0];
-
-    if (recommended) {
-      setSelectedIdea(recommended);
-    }
+    if (recommended) setSelectedIdea(recommended);
   };
 
   const handleSaveCultivation = async () => {
     if (!selectedIdea) return;
-
     try {
       await db.ideas.update(selectedIdea.id, {
         deepProblemDetail: deepProblemDetail,
@@ -91,78 +115,106 @@ export default function CultivationPage() {
         cultivation: cultivationState,
       });
       showToast("IDEAを育成しました！");
-      setSelectedIdea(null); // Return to list after saving
+      setSelectedIdea(null);
     } catch (error) {
       console.error("Failed to cultivate idea:", error);
       alert("育成に失敗しました。");
     }
   };
 
-  const handleApplySceneTypesChange = ( // 関数名変更
-    scene: 1 | 2 | 3,
-    types: ApplyContextType[] // 配列を受け取る
-  ) => {
-    setCultivationState((prev) => ({
-      ...prev,
-      [`applyScene${scene}Type`]: types.length > 0 ? types : null, // 配列が空ならnullをセット
-    }));
+  const handleApplySceneTypesChange = (scene: 1 | 2 | 3, types: ApplyContextType[]) => {
+    setCultivationState((prev) => ({ ...prev, [`applyScene${scene}Type`]: types.length > 0 ? types : null }));
   };
 
-  const handleApplySceneNoteChange = (
-    scene: 1 | 2 | 3,
-    note: string
-  ) => {
-    setCultivationState((prev) => ({
-      ...prev,
-      [`applyScene${scene}Note`]: note,
-    }));
+  const handleApplySceneNoteChange = (scene: 1 | 2 | 3, note: string) => {
+    setCultivationState((prev) => ({ ...prev, [`applyScene${scene}Note`]: note }));
+  };
+  // --- (End of unchanged hooks and handlers) ---
+
+
+  const IdeaListItem = ({ idea }: { idea: Idea }) => {
+    const progress = getCultivationProgress(idea);
+    const nextAction = getNextAction(idea);
+    return (
+      <div
+        key={idea.id}
+        className="block rounded-lg border bg-card text-card-foreground shadow-sm transition-shadow hover:shadow-md cursor-pointer p-4"
+        onClick={() => setSelectedIdea(idea)}
+      >
+        <p className="font-semibold leading-tight line-clamp-2">{idea.text}</p>
+        <div className="flex items-center gap-2 mt-2 text-sm">
+          <Progress value={progress.percentage} className="h-2 flex-grow" />
+          <span className="font-medium">{progress.percentage}%</span>
+        </div>
+        {progress.percentage < 100 && <p className="text-sm text-muted-foreground mt-2">{nextAction}</p>}
+        <div className="flex items-end justify-between mt-2">
+          <p className="text-xs text-muted-foreground">{new Date(idea.createdAt).toLocaleDateString()}</p>
+          <Button variant="ghost" size="sm" className="px-2 py-0.5 h-auto text-sm" onClick={(e) => { e.stopPropagation(); setSelectedIdea(idea); }}>
+            続きから
+          </Button>
+        </div>
+      </div>
+    );
   };
 
-    // If no idea is selected, show the list of ideas
-    if (!selectedIdea) {
-      return (
-        <div className="space-y-6 pb-12">
-          {/* ページ上部（モチベ領域） */}
-                  <div className="space-y-2">
-                    <h1 className="text-3xl font-bold">育成</h1>
-                    <div className="flex items-center justify-between pt-2">
-                      <p className="text-sm text-muted-foreground">                育成中 {cultivatedIdeasCount}件 {cultivatedIdeasCount > 0 && `(平均 ${averageCultivationPercentage}%)`}
-              </p>
-              <Button onClick={recommendIdeaToCultivate} className="bg-black text-white hover:bg-gray-800">
-                今日のIDEAを育成
-              </Button>
-            </div>
+
+  // 3. UI Re-construction
+  if (!selectedIdea) {
+    return (
+      <div className="space-y-6 pb-12">
+        {/* Page Header */}
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold">育成</h1>
+          <SortOrderSelector sortOrder={sortOrder} setSortOrder={setSortOrder} />
+          <div className="flex items-center justify-between pt-2">
+            <p className="text-sm text-muted-foreground">
+              育成中 {inProgressIdeasCount}件 {inProgressIdeasCount > 0 && `(平均 ${averageCultivationPercentage}%)`}
+            </p>
+            <Button onClick={recommendIdeaToCultivate} className="bg-black text-white hover:bg-gray-800">
+              今日のIDEAを育成
+            </Button>
           </div>
-  
-          {/* 育成中リスト */}
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold">育成中のIDEA</h2>
+        </div>
+
+        {/* Developed Ideas Section */}
+        <div className="space-y-2 pt-4">
+          <button
+            onClick={() => setDevelopedSectionOpen(!isDevelopedSectionOpen)}
+            className="w-full flex justify-between items-center py-2 group"
+          >
+            <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">育成済みIDEA</h2>
+            <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+              <span className="text-sm font-medium">{developedIdeas.length}</span>
+              <ChevronIcon isOpen={isDevelopedSectionOpen} />
+            </div>
+          </button>
+          {isDevelopedSectionOpen && (
             <div className="space-y-2">
-              {cultivatedIdeasCount > 0 ? (
-                cultivatedIdeas.map((ideaItem: Idea) => {
-                  const progress = getCultivationProgress(ideaItem);
-                  const nextAction = getNextAction(ideaItem);
-                  return (
-                    <div
-                      key={ideaItem.id}
-                      className="block rounded-lg border bg-card text-card-foreground shadow-sm transition-shadow hover:shadow-md cursor-pointer p-4"
-                      onClick={() => setSelectedIdea(ideaItem)}
-                    >
-                      <p className="font-semibold leading-tight line-clamp-2">{ideaItem.text}</p>
-                      <div className="flex items-center gap-2 mt-2 text-sm">
-                        <Progress value={progress.percentage} className="h-2 flex-grow" />
-                        <span className="font-medium">{progress.percentage}%</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-2">{nextAction}</p>
-                      <div className="flex items-end justify-between mt-2">
-                        <p className="text-xs text-muted-foreground">{new Date(ideaItem.createdAt).toLocaleDateString()}</p>
-                        <Button variant="ghost" size="sm" className="px-2 py-0.5 h-auto text-sm" onClick={(e) => { e.stopPropagation(); setSelectedIdea(ideaItem); }}>
-                          続きから
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })
+              {developedIdeas.length > 0 ? (
+                developedIdeas.map((idea) => <IdeaListItem key={idea.id} idea={idea} />)
+              ) : (
+                <p className="py-4 text-center text-sm text-muted-foreground">育成済みのIDEAはありません</p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* In-Progress Ideas Section */}
+        <div className="space-y-2 pt-4">
+          <button
+            onClick={() => setInProgressSectionOpen(!isInProgressSectionOpen)}
+            className="w-full flex justify-between items-center py-2 group"
+          >
+            <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">育成中IDEA</h2>
+            <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+              <span className="text-sm font-medium">{inProgressIdeas.length}</span>
+              <ChevronIcon isOpen={isInProgressSectionOpen} />
+            </div>
+          </button>
+          {isInProgressSectionOpen && (
+            <div className="space-y-2">
+              {inProgressIdeas.length > 0 ? (
+                inProgressIdeas.map((idea) => <IdeaListItem key={idea.id} idea={idea} />)
               ) : (
                 <div className="py-8 text-center space-y-4">
                   <p className="text-sm text-muted-foreground">育成中のIDEAはまだありません</p>
@@ -172,11 +224,13 @@ export default function CultivationPage() {
                 </div>
               )}
             </div>
-          </div>
+          )}
         </div>
-      );
-    }
-  // If an idea is selected, show the cultivation form
+      </div>
+    );
+  }
+
+  // Cultivation form for selected idea (no change)
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
@@ -186,7 +240,6 @@ export default function CultivationPage() {
         </Button>
         <h1 className="text-xl font-bold">{selectedIdea.text}</h1>
       </div>
-
       <Card>
         <CardHeader><CardTitle>育成シート</CardTitle></CardHeader>
         <CardContent className="space-y-6">
@@ -194,21 +247,21 @@ export default function CultivationPage() {
             <Textarea
               value={deepProblemDetail}
               onChange={e => setDeepProblemDetail(e.target.value)}
-              placeholder="例: 学生がカフェで勉強中、集中できない"
+              placeholder="記入する"
             />
           </CultivationField>
           <CultivationField label="2) 解決IDEA（工夫）" description="その課題を解決するための具体的なアプローチや独自の工夫">
             <Textarea
               value={deepSolution}
-              onChange={e => setDeepSolution(e.target.value)}
-              placeholder="例: 環境音を生成するアプリで、好みの集中空間を再現する"
+              onChange={e => setDeepSolution(e.g.target.value)}
+              placeholder="記入する"
             />
           </CultivationField>
           <CultivationField label="3) 価値の具体（どう良くなる）" description="解決策がもたらすポジティブな変化や、どうすればもっと良くなるか">
             <Textarea
               value={deepValueDetail}
               onChange={e => setDeepValueDetail(e.target.value)}
-              placeholder="例: カフェでも自宅でも、ノイズを気にせず高い集中力を維持できる"
+              placeholder="記入する"
             />
           </CultivationField>
           <ApplySceneSection

@@ -18,7 +18,7 @@ export function ApplySceneSection({
   onNoteChange,
 }: ApplySceneSectionProps) {
   const formattedSceneNumber = String(sceneNumber).padStart(2, '0');
-  const heading = `${sceneNumber}) 応用先 ${formattedSceneNumber} (カテゴリ)`;
+  const heading = `${sceneNumber + 3})応用先${formattedSceneNumber}`;
   const description = `このIDEAがどのような場面で役立つか`;
   const noteLabel = `具体的メモ`;
   const notePlaceholder = "記入する";

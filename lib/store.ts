@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { db } from './db';
-import { AppSettings, AppTheme, FontSize, AfterNewIdeaBehavior, WeekStartsOn } from './types';
+import { AppSettings, AppTheme, FontSize, AfterNewIdeaBehavior, WeekStartsOn, SortOrder } from './types'; // SortOrderをインポート
 
 interface ToastState {
   message: string;
@@ -16,8 +16,10 @@ interface AppState {
   settings: AppSettings | null;
   loadSettings: () => Promise<void>;
   updateSettings: (newSettings: Partial<AppSettings>) => Promise<void>;
-  tempCapturedImage: string | null; // Add this
-  setTempCapturedImage: (imageData: string | null) => void; // Add this
+  tempCapturedImage: string | null;
+  setTempCapturedImage: (imageData: string | null) => void;
+  sortOrder: SortOrder; // 並び替え順序の状態を追加
+  setSortOrder: (order: SortOrder) => void; // 並び替え順序を設定するアクションを追加
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -33,8 +35,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
   hideToast: () => set({ toast: null }),
   settings: null,
-  tempCapturedImage: null, // Add this
-  setTempCapturedImage: (imageData) => set({ tempCapturedImage: imageData }), // Add this
+  tempCapturedImage: null,
+  setTempCapturedImage: (imageData) => set({ tempCapturedImage: imageData }),
+  sortOrder: 'newest', // sortOrderの初期値を設定
+  setSortOrder: (order) => set({ sortOrder: order }), // setSortOrderの実装
   loadSettings: async () => {
     // DBがオープンするのを待つ
     await db.open(); // ★ここを追加/修正★
