@@ -67,7 +67,7 @@ export default function CultivationPage() {
   const [selectedIdea, setSelectedIdea] = useState<Idea | null>(null);
 
   // 2. State Management: Collapsible sections
-  const [isDevelopedSectionOpen, setDevelopedSectionOpen] = useState(true);
+  const [isDevelopedSectionOpen, setDevelopedSectionOpen] = useState(false);
   const [isInProgressSectionOpen, setInProgressSectionOpen] = useState(true);
 
 
