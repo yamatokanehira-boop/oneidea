@@ -253,7 +253,7 @@ export default function CultivationPage() {
           <CultivationField label="2) 解決IDEA（工夫）" description="その課題を解決するための具体的なアプローチや独自の工夫">
             <Textarea
               value={deepSolution}
-              onChange={e => setDeepSolution(e.g.target.value)}
+              onChange={e => setDeepSolution(e.target.value)}
               placeholder="記入する"
             />
           </CultivationField>
